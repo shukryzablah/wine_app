@@ -2,4 +2,7 @@ Ideas:
 
 * Mood/sentiment analysis
 * How many words does Emily Dickinson know? (Empirical Bayes - Shakespeare)
+* Frequency of words/statistics of common words & word combinations
+* Clustering based on themes
+* Pair quotes with pictures
 
