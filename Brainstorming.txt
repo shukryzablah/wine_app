@@ -5,4 +5,5 @@ Ideas:
 * Frequency of words/statistics of common words & word combinations
 * Clustering based on themes
 * Pair quotes with pictures
-
+* Search for poems by name/first line
+* Generate poems in the style of Emily Dickinson
