@@ -1,0 +1,5 @@
+Ideas:
+
+* Mood/sentiment analysis
+* How many words does Emily Dickinson know? (Empirical Bayes - Shakespeare)
+
