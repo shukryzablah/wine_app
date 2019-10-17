@@ -30,7 +30,7 @@ server <- function(input, output) {
     input$pickpoem
     
     require(mosaic)
-    directory <- "gutenberg"
+    directory <- "../gutenberg"
     
     files <- list.files(directory)
     n <- length(files)
