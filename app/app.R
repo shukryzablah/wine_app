@@ -1,14 +1,8 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
+library(mosaic)
 library(shinyWidgets)
+
+#*****************START UI*******************************#
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -19,7 +13,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       searchInput(
-        inputId = "id", 
+        inputId = "search_pattern", 
         label = "Enter your search:", 
         placeholder = "This is a placeholder", 
         btnSearch = icon("search"), 
@@ -29,18 +23,21 @@ ui <- fluidPage(
       actionButton("pickpoem", "Pick a poem at random")),
     
     # Show a plot of the generated distribution
-    mainPanel(verbatimTextOutput("displaypoem"))
+    mainPanel(verbatimTextOutput("displaypoem"),
+              DT::DTOutput("search_matches"))
   )
 )
 
+#*****************END UI*******************************#
+
+#*****************START SERVER*******************************#
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
    
   output$displaypoem <- renderPrint({
     input$pickpoem
-    
-    require(mosaic)
+
     directory <- "../poems-processed"
     
     files <- list.files(directory)
@@ -52,7 +49,37 @@ server <- function(input, output) {
       cat(paste(lines[i], "\n"))
     }
   })
+
+####################################################
+    output$search_matches <- DT::renderDT({
+        search_files_for_pattern(file_names, input$search_pattern)
+    })
 }
+
+#*****************END SERVER*******************************#
+
+##################################################################
+#################UTILITY FUNCTIONS FOR SEARCH######################
+
+search_file_for_pattern <- function(file_name, pattern) {
+    raw <- readLines(paste0("../poems-processed/", file_name))
+    mask <- str_detect(raw, pattern)
+    hits <- tibble(file = file_name, matches = raw[mask])
+    return(hits)
+}
+
+search_files_for_pattern <- function(file_names, pattern) {
+    all_hits <- file_names %>%
+        map_dfr(search_file_for_pattern, pattern)
+    return(all_hits)
+}
+
+
+##################################################################
+#######################LIST OF ALL FILE NAMES######################
+file_names <- fs::dir_ls("../poems-processed")
+###################################################################
+##################################################################
 
 # Run the application 
 shinyApp(ui = ui, server = server)
