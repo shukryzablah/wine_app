@@ -1,5 +1,5 @@
 require(mosaic)
-directory <- "gutenberg"
+directory <- "poems-processed"
 
 files <- list.files(directory)
 n <- length(files)
@@ -18,3 +18,4 @@ for (i in 1:length(index)) {
 }
 
 df <- data.frame(index, files, poemlist)
+
