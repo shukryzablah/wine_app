@@ -8,6 +8,7 @@
 #
 
 library(shiny)
+library(shinyWidgets)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -17,11 +18,21 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
+      searchInput(
+        inputId = "id", 
+        label = "Enter your search:", 
+        placeholder = "This is a placeholder", 
+        btnSearch = icon("search"), 
+        btnReset = icon("remove"), 
+        width = "100%"
+      ),
       actionButton("pickpoem", "Pick a poem at random")),
+    
     # Show a plot of the generated distribution
     mainPanel(verbatimTextOutput("displaypoem"))
   )
 )
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -30,7 +41,7 @@ server <- function(input, output) {
     input$pickpoem
     
     require(mosaic)
-    directory <- "../gutenberg"
+    directory <- "../poems-processed"
     
     files <- list.files(directory)
     n <- length(files)
