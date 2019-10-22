@@ -15,7 +15,7 @@ ui <- fluidPage(
       searchInput(
         inputId = "search_pattern", 
         label = "Enter your search:", 
-        placeholder = "This is a placeholder", 
+        value = "love",
         btnSearch = icon("search"), 
         btnReset = icon("remove"), 
         width = "100%"
@@ -63,7 +63,7 @@ server <- function(input, output) {
 
 search_file_for_pattern <- function(file_name, pattern) {
     raw <- readLines(paste0("../poems-processed/", file_name))
-    mask <- str_detect(raw, pattern)
+    mask <- str_detect(raw, regex(pattern, ignore_case = T))
     hits <- tibble(file = file_name, matches = raw[mask])
     return(hits)
 }
@@ -73,7 +73,6 @@ search_files_for_pattern <- function(file_names, pattern) {
         map_dfr(search_file_for_pattern, pattern)
     return(all_hits)
 }
-
 
 ##################################################################
 #######################LIST OF ALL FILE NAMES######################

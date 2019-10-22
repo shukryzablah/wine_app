@@ -4,7 +4,7 @@ library(stringr)
 
 search_file_for_pattern <- function(file_name, pattern) {
     raw <- readLines(paste0("../poems-processed/", file_name))
-    mask <- str_detect(raw, pattern)
+    mask <- str_detect(raw, regex(pattern, ignore_case = T))
     hits <- tibble(file = file_name, matches = raw[mask])
     return(hits)
 }
