@@ -13,7 +13,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       searchInput(
-        inputId = "search_pattern", 
+        inputId = "search_pattern",
         label = "Enter your search:", 
         value = "love",
         btnSearch = icon("search"), 

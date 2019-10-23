@@ -11,7 +11,7 @@ getTitle <- function(index) {
   return(toString(lines[3]))
 }
 
-poemlist <- character(length(index))
+title <- character(length(index))
 
 for (i in 1:length(index)) {
   poemlist[i] <- getTitle(i)
