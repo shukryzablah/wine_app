@@ -1,6 +1,8 @@
 library(shiny)
 library(mosaic)
 library(shinyWidgets)
+library(purrr)
+library(stringr)
 
 #*****************START UI*******************************#
 
