@@ -12,6 +12,7 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
+      p("Search for an Emily Dickinson poem or choose to display a poem at random below."),
       searchInput(
         inputId = "search_pattern",
         label = "Enter your search:", 

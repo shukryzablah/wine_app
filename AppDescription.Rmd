@@ -1,0 +1,37 @@
+---
+output:
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  word_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+## Stat 495 - Homework #6 - Due Thursday, Oct. 24
+### Emily Ye & Shukry Zablah
+
+1-2 page description of what the Shiny app is and what aspects of it were new for group members
+
+#### Summary of App
+
+Our app includes the original function of picking a random poem and expands it by including a reactive search bar that allows for users to search for a word or phrase and view the lines of Emily Dickinson's poems matching the search term(s).
+
+#### New R functions
+
+For Emily, the following functions were new:
+
+* data table outputs in Shiny (Using DT in Shiny)
+
+* ``stringr`` package and its functions (`str_detect`, `regex`)
+
+For Shukry, the following functions were new:
+
+#### References
+
+"Using DT in Shiny." Retrieved from https://rstudio.github.io/DT/shiny.html.
+
+
