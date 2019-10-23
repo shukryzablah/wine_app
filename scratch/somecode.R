@@ -14,8 +14,8 @@ getTitle <- function(index) {
 title <- character(length(index))
 
 for (i in 1:length(index)) {
-  poemlist[i] <- getTitle(i)
+  title[i] <- getTitle(i)
 }
 
-df <- data.frame(index, files, poemlist)
+df <- data.frame(index, files, title)
 
