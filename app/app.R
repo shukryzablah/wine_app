@@ -46,9 +46,10 @@ ui <- fluidPage(
 
 #*****************START SERVER*******************************#
 
-# Define server logic required to draw a histogram
+# Define server logic required to display poem & search matches data table
 server <- function(input, output) {
-   
+  
+  #Output for random poem display 
   output$displaypoem <- renderPrint({
     input$pickpoem
 
@@ -65,6 +66,7 @@ server <- function(input, output) {
   })
 
 ####################################################
+  #Output for search matches data table
     output$search_matches <- DT::renderDT({
         messy <- search_files_for_pattern(file_names, input$search_pattern)
     })
