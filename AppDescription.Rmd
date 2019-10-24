@@ -24,7 +24,7 @@ Our app includes the original function of picking a random poem and expands it b
 
 For Emily, the following functions were new:
 
-* data table outputs in Shiny (Using DT in Shiny)
+* data table outputs in Shiny (Using DT in Shiny, 2019)
 
 * ``stringr`` package and its functions (`str_detect`, `regex`)
 
@@ -32,6 +32,6 @@ For Shukry, the following functions were new:
 
 #### References
 
-"Using DT in Shiny." Retrieved from https://rstudio.github.io/DT/shiny.html.
+"Using DT in Shiny." 2019. Retrieved from https://rstudio.github.io/DT/shiny.html.
 
 
