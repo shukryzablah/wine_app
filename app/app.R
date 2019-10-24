@@ -6,14 +6,19 @@ library(stringr)
 
 #*****************START UI*******************************#
 
-# Define UI for application that draws a histogram
+# Define UI for search app ----
 ui <- fluidPage(
-   
-  # Application title
-  titlePanel("Display a random Emily Dickinson poem (Gutenberg edition)"),
   
+  # App title ----
+  titlePanel("Search for an Emily Dickinson Poem (Gutenberg edition) or Display a Random One"),
+  
+  # Sidebar layout with input and output definitions ----
   sidebarLayout(
+    
+    # Sidebar panel for inputs ----
     sidebarPanel(
+      
+      # Input: search bar & action button ----
       p("Search for an Emily Dickinson poem or choose to display a poem at random below."),
       searchInput(
         inputId = "search_pattern",
@@ -25,9 +30,15 @@ ui <- fluidPage(
       ),
       actionButton("pickpoem", "Pick a poem at random")),
     
-    # Show a plot of the generated distribution
-    mainPanel(verbatimTextOutput("displaypoem"),
-              DT::DTOutput("search_matches"))
+    # Main panel for displaying outputs ----
+    mainPanel(
+      
+      # Output: Tabset w/ poem, search matches, selected poem ----
+      tabsetPanel(type = "tabs",
+                  tabPanel("Random Poem", verbatimTextOutput("displaypoem")),
+                  tabPanel("Search Matches", DT::DTOutput("search_matches"))
+      )
+    )
   )
 )
 
@@ -35,13 +46,14 @@ ui <- fluidPage(
 
 #*****************START SERVER*******************************#
 
-# Define server logic required to draw a histogram
+# Define server logic required to display poem & search matches data table
 server <- function(input, output) {
-   
+  
+  #Output for random poem display 
   output$displaypoem <- renderPrint({
     input$pickpoem
 
-    directory <- "../poems-processed"
+    directory <- "./poems-processed"
     
     files <- list.files(directory)
     n <- length(files)
@@ -54,6 +66,7 @@ server <- function(input, output) {
   })
 
 ####################################################
+  #Output for search matches data table
     output$search_matches <- DT::renderDT({
         messy <- search_files_for_pattern(file_names, input$search_pattern)
     })
@@ -65,7 +78,7 @@ server <- function(input, output) {
 #################UTILITY FUNCTIONS FOR SEARCH######################
 
 search_file_for_pattern <- function(file_name, pattern) {
-    raw <- readLines(paste0("../poems-processed/", file_name))
+    raw <- readLines(paste0(file_name))
     title <- raw[3]
     mask <- str_detect(raw, regex(pattern, ignore_case = T))
     hits <- tibble(title = title, matches = raw[mask])
@@ -80,7 +93,7 @@ search_files_for_pattern <- function(file_names, pattern) {
 
 ##################################################################
 #######################LIST OF GLOBALS######################
-file_names <- fs::dir_ls("../poems-processed")
+file_names <- fs::dir_ls("./poems-processed")
 ###################################################################
 ##################################################################
 
