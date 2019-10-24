@@ -1,5 +1,5 @@
 ---
-title: STAT495 - Homework #6
+title: STAT495 - Homework 6
 author: "Shukry Zablah and Emily Ye"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -18,8 +18,8 @@ For example, if the user searches for the word "love", our app will be able to r
 For Emily, the following functions were new:
 
 * data table outputs in Shiny (Using DT in Shiny, 2019)
-
 * ``stringr`` package and its functions (`str_detect`, `regex`)
+* the ``shinythemes`` package to change the overall look of the app
 
 For Shukry, the following functions things were new:
 
