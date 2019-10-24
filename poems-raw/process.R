@@ -1,6 +1,6 @@
 # Process Emily Dickinson Project Gutenberg corpus
 # Nicholas Horton, nhorton@amherst.edu   October 20, 2014
-location = "../poems-processed"
+location = "../app/poems-processed"
 if (!file.exists(location)) {
   dir.create(location)
 }
