@@ -53,7 +53,7 @@ server <- function(input, output) {
   output$displaypoem <- renderPrint({
     input$pickpoem
 
-    directory <- "../poems-processed"
+    directory <- "./poems-processed"
     
     files <- list.files(directory)
     n <- length(files)
@@ -78,7 +78,7 @@ server <- function(input, output) {
 #################UTILITY FUNCTIONS FOR SEARCH######################
 
 search_file_for_pattern <- function(file_name, pattern) {
-    raw <- readLines(paste0("../poems-processed/", file_name))
+    raw <- readLines(paste0(file_name))
     title <- raw[3]
     mask <- str_detect(raw, regex(pattern, ignore_case = T))
     hits <- tibble(title = title, matches = raw[mask])
@@ -93,7 +93,7 @@ search_files_for_pattern <- function(file_names, pattern) {
 
 ##################################################################
 #######################LIST OF GLOBALS######################
-file_names <- fs::dir_ls("../poems-processed")
+file_names <- fs::dir_ls("./poems-processed")
 ###################################################################
 ##################################################################
 
