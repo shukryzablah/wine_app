@@ -55,7 +55,7 @@ server <- function(input, output) {
 
 ####################################################
     output$search_matches <- DT::renderDT({
-        search_files_for_pattern(file_names, input$search_pattern)
+        messy <- search_files_for_pattern(file_names, input$search_pattern)
     })
 }
 
@@ -66,8 +66,9 @@ server <- function(input, output) {
 
 search_file_for_pattern <- function(file_name, pattern) {
     raw <- readLines(paste0("../poems-processed/", file_name))
+    title <- raw[3]
     mask <- str_detect(raw, regex(pattern, ignore_case = T))
-    hits <- tibble(file = file_name, matches = raw[mask])
+    hits <- tibble(title = title, matches = raw[mask])
     return(hits)
 }
 
@@ -78,7 +79,7 @@ search_files_for_pattern <- function(file_names, pattern) {
 }
 
 ##################################################################
-#######################LIST OF ALL FILE NAMES######################
+#######################LIST OF GLOBALS######################
 file_names <- fs::dir_ls("../poems-processed")
 ###################################################################
 ##################################################################
