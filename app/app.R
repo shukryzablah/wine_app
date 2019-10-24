@@ -3,11 +3,12 @@ library(mosaic)
 library(shinyWidgets)
 library(purrr)
 library(stringr)
+library(shinythemes)
 
 #*****************START UI*******************************#
 
 # Define UI for search app ----
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("flatly"), response = TRUE,
   
   # App title ----
   titlePanel("Search for an Emily Dickinson Poem (Gutenberg edition) or Display a Random One"),
