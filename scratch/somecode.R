@@ -1,5 +1,5 @@
 require(mosaic)
-directory <- "poems-processed"
+directory <- "../poems-processed"
 
 files <- list.files(directory)
 n <- length(files)
@@ -17,5 +17,8 @@ for (i in 1:length(index)) {
   title[i] <- getTitle(i)
 }
 
+
 df <- data.frame(index, files, title)
+
+save(df, file = "titledata.rda")
 
