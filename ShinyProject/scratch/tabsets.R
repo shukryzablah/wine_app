@@ -1,0 +1,110 @@
+library(shiny)
+library(mosaic)
+library(shinyWidgets)
+library(purrr)
+library(stringr)
+
+#*****************START UI*******************************#
+# Define UI for random distribution app ----
+ui <- fluidPage(
+  
+  # App title ----
+  titlePanel("Display and search for an Emily Dickinson Poem (Gutenberg edition)"),
+  
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+    
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+      
+      # Input: Select the random distribution type ----
+      p("Search for an Emily Dickinson poem or choose to display a poem at random below."),
+      searchInput(
+        inputId = "search_pattern",
+        label = "Enter your search:", 
+        value = "love",
+        btnSearch = icon("search"), 
+        btnReset = icon("remove"), 
+        width = "100%"
+      ),
+      actionButton("pickpoem", "Pick a poem at random")),
+      
+    # Main panel for displaying outputs ----
+    mainPanel(
+      
+      # Output: Tabset w/ poem, search matches, selected poem ----
+      tabsetPanel(type = "tabs",
+                  tabPanel("Random Poem", verbatimTextOutput("displaypoem")),
+                  tabPanel("Search Matches", DT::DTOutput("search_matches")),
+                  tabPanel("Selected Poem", verbatimTextOutput("selectedpoem"))
+      )
+    )
+    
+  )
+)
+
+#*****************END UI*******************************#
+
+#*****************START SERVER*******************************#
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  
+  output$displaypoem <- renderPrint({
+    input$pickpoem
+    
+    directory <- "../poems-processed"
+    
+    files <- list.files(directory)
+    n <- length(files)
+    
+    randnum <- sample(1:n, 1) 
+    lines <- readLines(paste(directory, "/", files[randnum], sep=""))
+    for (i in 1:length(lines)) {
+      cat(paste(lines[i], "\n"))
+    }
+  })
+  
+  ####################################################
+  output$search_matches <- DT::renderDT({
+    search_files_for_pattern(file_names, input$search_pattern)
+  })
+  
+  output$selectedpoem = renderPrint({
+    directory <- "../poems-processed"
+    s <- input$search_matches_rows_selected
+    if (length(s)) {
+      lines <- readLines(paste(directory, "/", files[s], sep=""))
+      for (i in 1:length(lines)) {
+        cat(paste(lines[i], "\n")) }
+      }
+    })
+}
+
+#*****************END SERVER*******************************#
+
+##################################################################
+#################UTILITY FUNCTIONS FOR SEARCH######################
+
+search_file_for_pattern <- function(file_name, pattern) {
+  raw <- readLines(paste0("../poems-processed/", file_name))
+  mask <- str_detect(raw, regex(pattern, ignore_case = T))
+  hits <- tibble(file = file_name, matches = raw[mask])
+  return(hits)
+}
+
+search_files_for_pattern <- function(file_names, pattern) {
+  all_hits <- file_names %>%
+    map_dfr(search_file_for_pattern, pattern)
+  return(all_hits)
+}
+
+##################################################################
+#######################LIST OF ALL FILE NAMES######################
+file_names <- fs::dir_ls("../poems-processed")
+###################################################################
+##################################################################
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
