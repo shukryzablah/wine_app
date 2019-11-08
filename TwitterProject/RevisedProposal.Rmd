@@ -26,63 +26,31 @@ knitr::opts_chunk$set(
 
 **Team Name:** YZ Analytics
 
-**Title:** The Life and Times of a Tweet
+**Title:** Another Glass, Please: Creating a Virtual Sommelier
 
-**Purpose:** As of 2019, Twitter has 330 million monthly active users, and more than 500 million tweets are sent each day (Ling, 2019). How, then, do certain tweets gain traction? The purpose of this project is to track how original tweets travel through retweets and reach their audience. This project would be useful for Twitter users trying to understand the impact they can have through the platform.
+**Purpose:** 
 
-**Data:** We will be working with Twitter data, using the package ``rtweet`` (Kearney, 2019) to interact with Twitter's APIs using commands such as `search_tweets`.
-
-For an example of how the `search_tweets` command works, here is how the most recent 200 tweets with the hashtag #ElectionDay can be extracted:
-
-```{r}
-election_tweets <- search_tweets(
-  "#ElectionDay", n = 200, include_rts = TRUE
-)
-```
-
-```{r}
-ts_plot(election_tweets, by = "secs") + ggplot2::labs(
-    title = "Time series plot of election_tweets aggregated by second")
-```
-
-The time is in UTC+0 time zone.
+**Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017)
 
 **Variables:**
 
-```{r}
-names(election_tweets)
-```
-The `search_tweets` function results in 90 variables, some of which are N/A. The most relevant variables are listed below:
+Variable descriptions from the data set:
 
-Identifying information of author:
+country - The country that the wine is from
+description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc.
+designation - The vineyard within the winery where the grapes that made the wine are from
+points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
+price - The cost for a bottle of the wine
+province - The province or state that the wine is from
+region_1 - The wine growing area in a province or state (ie Napa)
+region_2 - Sometimes there are more specific regions specified within a wine growing area (ie Rutherford inside the Napa Valley), but this value can sometimes be blank
+variety - The type of grapes used to make the wine (ie Pinot Noir)
+winery - The winery that made the wine
 
-* screen name
-* user ID
-* number of followers
+**Model:** Our model aims to predict price? quality?
 
-Engagement of tweet:
-
-* number of favorites
-* number of retweets
-
-Tweet content:
-
-* the text of the tweet
-* hashtags
-* if the tweet has any images, texts, GIFs, videos or other media
-
-Tweet metadata:
-
-* location of tweet 
-
-// sentiment analysis of tweets?
-
-**Model:** Our model aims to predict the number of retweets of a tweet. We are thinking of using a regression tree.
-
-**End Product:** We aim to demo our analyses online with dynamic visualizations. We will display analyses of tweets from a set list of individuals. We also hope to create a web application for users to personalize our analysis to themselves. For example, such a web application could allow a user to type a tweet they want to send, input their follower count, and the app would display their predicted number of retweets.
+**End Product:** We aim to demo our analyses online with dynamic visualizations. Virtual Sommelier - Interactive map that provides wine recommendations?
 
 ### References
 
-Kearney, M. W. (2019). rtweet: Collecting Twitter Data. R package version 0.6.9, https://cran.r-project.org/package=rtweet.
-
-Ling, Y. (2019). 10 Twitter Statistics Every Marketer Should Know in 2019. https://www.oberlo.com/blog/twitter-statistics
+Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
