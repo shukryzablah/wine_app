@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 
 **Purpose:** 
 
-**Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017)
+**Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
 
 **Variables:**
 
