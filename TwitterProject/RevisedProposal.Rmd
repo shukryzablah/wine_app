@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 
 **Title:** Another Glass, Please: Creating a Virtual Sommelier
 
-**Purpose:** 
+**Purpose:** Purchasing wine can be overwhelming with the sheer number of choices there are, whether they be on a restaurant's wine menu, in liquor stores, or wineries. In this project, we aim to understand the features of what makes a good wine and predict the quality of wine from its description. Our project is applicable to both newly exploring wine drinkers and experienced wine enthusiasts alike. Non-wine drinkers will be able to know what makes a good wine, and wine drinkers will be able to explore and discover new wine varieties to try.
 
 **Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
 
@@ -47,9 +47,9 @@ region_2 - Sometimes there are more specific regions specified within a wine gro
 variety - The type of grapes used to make the wine (ie Pinot Noir)
 winery - The winery that made the wine
 
-**Model:** Our model aims to predict price? quality?
+**Model:** We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
 
-**End Product:** We aim to demo our analyses online with dynamic visualizations. Virtual Sommelier - Interactive map that provides wine recommendations?
+**End Product:** We aim to create a Virtual Sommelier with dynamic visualizations that provides wine recommendations based on different filters. For example, we envision an interactive map that will allow users to choose a country from which the wine is made. Additionally, we can add the most important features found from the random forest model to serve as filters for the wine recommendations.
 
 ### References
 
