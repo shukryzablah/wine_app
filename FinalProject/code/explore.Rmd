@@ -1,0 +1,36 @@
+---
+title: "Exploration"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+library(GGally)
+```
+
+```{r}
+path <- "../data/winemag-data-130k-v2.csv"
+Wine <- read_csv(path,
+                 col_types = cols(
+                     X1 = col_double(),
+                     country = col_character(),
+                     description = col_character(),
+                     designation = col_character(),
+                     points = col_double(),
+                     price = col_double(),
+                     province = col_character(),
+                     region_1 = col_character(),
+                     region_2 = col_character(),
+                     taster_name = col_character(),
+                     taster_twitter_handle = col_character(),
+                     title = col_character(),
+                     variety = col_character(),
+                     winery = col_character()),
+                 progress = FALSE
+                 ) %>%
+    rename(id = X1)
+```
+
+```{r}
+
+```
