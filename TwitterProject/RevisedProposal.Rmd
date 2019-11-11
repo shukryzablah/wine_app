@@ -14,16 +14,6 @@ output:
     fig_width: 5
 ---
 
-```{r, setup, include=FALSE}
-require(mosaic)   # Load additional packages here 
-library(rtweet)
-# Some customization.  You can alter or delete as desired (if you know what you are doing).
-trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
-knitr::opts_chunk$set(
-  tidy=FALSE,     # display code as typed
-  size="small")   # slightly smaller font for code
-```
-
 **Team Name:** YZ Analytics
 
 **Title:** Another Glass, Please: Creating a Virtual Sommelier
@@ -32,25 +22,29 @@ knitr::opts_chunk$set(
 
 **Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
 
+The original data set poster also included his code for scraping the data off of the WineEnthusiast website, so we will also explore to see if his code still works and scrape the data ourselves so we have more up-to-date wine reviews and more data. There are currently about 270,000 reviews on WineEnthusiast (WineEnthusiast, 2019).
+
 **Variables:**
 
 Variable descriptions from the data set:
 
-country - The country that the wine is from
-description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc.
-designation - The vineyard within the winery where the grapes that made the wine are from
-points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
-price - The cost for a bottle of the wine
-province - The province or state that the wine is from
-region_1 - The wine growing area in a province or state (ie Napa)
-region_2 - Sometimes there are more specific regions specified within a wine growing area (ie Rutherford inside the Napa Valley), but this value can sometimes be blank
-variety - The type of grapes used to make the wine (ie Pinot Noir)
-winery - The winery that made the wine
+* country - The country that the wine is from
+* description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc.
+* designation - The vineyard within the winery where the grapes that made the wine are from
+* points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
+* price - The cost for a bottle of the wine
+* province - The province or state that the wine is from
+* region_1 - The wine growing area in a province or state (ie Napa)
+* region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
+* variety - The type of grapes used to make the wine (ie Pinot Noir)
+* winery - The winery that made the wine
 
 **Model:** We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
 
-**End Product:** We aim to create a Virtual Sommelier with dynamic visualizations that provides wine recommendations based on different filters. For example, we envision an interactive map that will allow users to choose a country from which the wine is made. Additionally, we can add the most important features found from the random forest model to serve as filters for the wine recommendations.
+**End Product:** We aim to create a Virtual Sommelier with dynamic visualizations that provides information on wine and its features. We envision an interactive map that will allow users to explore wine statistics and different countries or regions and even compare them. There will also be a Create Your Own Wine tool where users can input their wine's description and see our prediction of quality.
 
 ### References
 
 Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
+
+2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
