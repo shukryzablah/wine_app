@@ -38,6 +38,12 @@ Variable descriptions from the data set:
 * region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
 * variety - The type of grapes used to make the wine (ie Pinot Noir)
 * winery - The winery that made the wine
+* title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
+* year - pulled from the vintage in the title
+* taster_name - name of the taster
+* taster_twitter_handle - Twitter handle of the taster
+
+We intend to use some sort of text analysis and text mining to create additional quantitative variables from the description, in particular using Bag of Words (BOW) representation to calculate the Term Frequency-Inverse Document Frequency (TF-IDF) for the unique words of the description (Nabi, 2018). We can achieve this calculation through the `text2vec` package ("Predicting," 2018).
 
 **Model:** We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
 
@@ -45,6 +51,10 @@ Variable descriptions from the data set:
 
 ### References
 
+Nabi, Javaid. (2018). "Machine Learning - Text Processing." Towards Data Science. https://towardsdatascience.com/machine-learning-text-processing-1d5a2d638958
+
 Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
+
+2018. "Predicting Wine Ratings Using LightGBM + Text2Vec." Kaggle. https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec
 
 2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
