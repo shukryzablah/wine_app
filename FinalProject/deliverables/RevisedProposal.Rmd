@@ -14,17 +14,25 @@ output:
     fig_width: 5
 ---
 
-**Team Name:** YZ Analytics
+####Team Name:
 
-**Title:** Another Glass, Please: Creating a Virtual Sommelier
+YZ Analytics
 
-**Purpose:** Purchasing wine can be overwhelming with the sheer number of choices there are, whether they be on a restaurant's wine menu, in liquor stores, or wineries. In this project, we aim to understand the features of what makes a good wine and predict the quality of wine from its description. Our project is applicable to both newly exploring wine drinkers and experienced wine enthusiasts alike. Non-wine drinkers will be able to know what makes a good wine, and wine drinkers will be able to explore and discover new wine varieties to try.
+#### Title:
 
-**Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
+Another Glass, Please: Creating a Virtual Sommelier
+
+#### Purpose:
+
+Purchasing wine can be overwhelming with the sheer number of choices there are, whether they be on a restaurant's wine menu, in liquor stores, or wineries. In this project, we aim to understand the features of what makes a good wine and predict the quality of wine from its description. Our project is applicable to both newly exploring wine drinkers and experienced wine enthusiasts alike. Non-wine drinkers will be able to know what makes a good wine, and wine drinkers will be able to explore and discover new wine varieties to try.
+
+#### Data:
+
+We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
 
 The original data set poster also included his code for scraping the data off of the WineEnthusiast website, so we will also explore to see if his code still works and scrape the data ourselves so we have more up-to-date wine reviews and more data. There are currently about 270,000 reviews on WineEnthusiast (WineEnthusiast, 2019).
 
-**Variables:**
+#### Variables:
 
 Variable descriptions from the data set:
 
@@ -45,11 +53,15 @@ Variable descriptions from the data set:
 
 We intend to use some sort of text analysis and text mining to create additional quantitative variables from the description, in particular using Bag of Words (BOW) representation to calculate the Term Frequency-Inverse Document Frequency (TF-IDF) for the unique words of the description (Nabi, 2018). We can achieve this calculation through the `text2vec` package ("Predicting," 2018).
 
-**Model:** We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
+#### Model:
 
-**End Product:** We aim to create a Virtual Sommelier with dynamic visualizations that provides information on wine and its features. We envision an interactive map that will allow users to explore wine statistics and different countries or regions and even compare them. There will also be a Create Your Own Wine tool where users can input their wine's description and see our prediction of quality.
+We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
 
-### References
+#### End Product:
+
+We aim to create a Virtual Sommelier with dynamic visualizations that provides information on wine and its features. We envision an interactive map that will allow users to explore wine statistics and different countries or regions and even compare them. There will also be a Create Your Own Wine tool where users can input their wine's description and see our prediction of quality.
+
+#### References
 
 Nabi, Javaid. (2018). "Machine Learning - Text Processing." Towards Data Science. https://towardsdatascience.com/machine-learning-text-processing-1d5a2d638958
 
