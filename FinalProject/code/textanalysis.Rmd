@@ -20,6 +20,8 @@ library(tidytext)
 library(forcats)
 ```
 
+Following https://www.tidytextmining.com/tfidf.html
+
 ```{r}
 wine_words <- Wine %>%
   unnest_tokens(word, description) %>%
