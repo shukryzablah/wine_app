@@ -19,7 +19,7 @@ We will be working with Kaggle's wine review data, found here: https://www.kaggl
 
 The original data set poster also included his code for scraping the data off of the WineEnthusiast website, so we will also explore to see if his code still works and scrape the data ourselves so we have more up-to-date wine reviews and more data. There are currently about 270,000 reviews on WineEnthusiast (WineEnthusiast, 2019).
 
-**Variables:**
+#### Variables:
 
 Variable descriptions from the data set:
 
@@ -33,10 +33,15 @@ Variable descriptions from the data set:
 * region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
 * variety - The type of grapes used to make the wine (ie Pinot Noir)
 * winery - The winery that made the wine
+* title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
+* year - pulled from the vintage in the title
+* taster_name - name of the taster
+* taster_twitter_handle - Twitter handle of the taster
 * latitude - to be geolocated
 * longitude - to be geolocated
 * altitude - to be derived
 
+We intend to use some sort of text analysis and text mining to create additional quantitative variables from the description, in particular using Bag of Words (BOW) representation to calculate the Term Frequency-Inverse Document Frequency (TF-IDF) for the unique words of the description (Nabi, 2018). We can achieve this calculation through the `text2vec` package ("Predicting," 2018).
 
 **Model:** 
 
@@ -46,7 +51,9 @@ The model is not the focus of our visual exploration. However, we wish to seamle
 
 We are envisioning a web application with a lot of maps and actions on clicks. When clicks happen on certain countries with wineries we have data on, we want to display some summary information and graphs that are centered around teaching the broad strokes of wine type and quality. Additionally, we also want to provide search capabilities of a catalog. All of this under the umbrella of visualization. 
 
-### References
+#### References
 
+Nabi, Javaid. (2018). "Machine Learning - Text Processing." Towards Data Science. https://towardsdatascience.com/machine-learning-text-processing-1d5a2d638958
 Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
+2018. "Predicting Wine Ratings Using LightGBM + Text2Vec." Kaggle. https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec
 2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
