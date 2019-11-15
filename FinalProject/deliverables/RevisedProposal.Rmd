@@ -2,25 +2,20 @@
 title: "Stat-495 Revised Proposal"
 author: "Emily Ye & Shukry Zablah"
 date: "`r Sys.Date()`"
-output: 
-  pdf_document:
-    fig_height: 3
-    fig_width: 5
-  html_document:
-    fig_height: 3
-    fig_width: 5
-  word_document:
-    fig_height: 3
-    fig_width: 5
+output: "pdf_document"
 ---
 
 **Team Name:** YZ Analytics
 
-**Title:** Another Glass, Please: Creating a Virtual Sommelier
+**Title:** Wines Around the World.
 
-**Purpose:** Purchasing wine can be overwhelming with the sheer number of choices there are, whether they be on a restaurant's wine menu, in liquor stores, or wineries. In this project, we aim to understand the features of what makes a good wine and predict the quality of wine from its description. Our project is applicable to both newly exploring wine drinkers and experienced wine enthusiasts alike. Non-wine drinkers will be able to know what makes a good wine, and wine drinkers will be able to explore and discover new wine varieties to try.
+**Purpose:** 
 
-**Data:** We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
+A lot of people want to know about wine but don't know where to start. We are not wine experts, but we can leverage the experts and what they have to say to form an interactive, state of the art explorative visualization for the laity. In class we take visualization to its bare minimum. This project will try to embrace new visualization technologies in the context of learning more about wine, and present a couple of techniques that branch off from the curriculum such as working with extracting features from text. 
+
+**Data:** 
+
+We will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews.
 
 The original data set poster also included his code for scraping the data off of the WineEnthusiast website, so we will also explore to see if his code still works and scrape the data ourselves so we have more up-to-date wine reviews and more data. There are currently about 270,000 reviews on WineEnthusiast (WineEnthusiast, 2019).
 
@@ -38,13 +33,20 @@ Variable descriptions from the data set:
 * region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
 * variety - The type of grapes used to make the wine (ie Pinot Noir)
 * winery - The winery that made the wine
+* latitude - to be geolocated
+* longitude - to be geolocated
+* altitude - to be derived
 
-**Model:** We aim to create a model to predict the quality of wine (based on the number of points it received from WineEnthusiast) from its description. We plan to create our model using the random forest method. 
 
-**End Product:** We aim to create a Virtual Sommelier with dynamic visualizations that provides information on wine and its features. We envision an interactive map that will allow users to explore wine statistics and different countries or regions and even compare them. There will also be a Create Your Own Wine tool where users can input their wine's description and see our prediction of quality.
+**Model:** 
+
+The model is not the focus of our visual exploration. However, we wish to seamlessly incorporate a predictive model for new wines not in our dataset that predicts multiple categories at once, especially price and quality. We are thinking of clustering, maybe something similar to k means.
+
+**End Product:** 
+
+We are envisioning a web application with a lot of maps and actions on clicks. When clicks happen on certain countries with wineries we have data on, we want to display some summary information and graphs that are centered around teaching the broad strokes of wine type and quality. Additionally, we also want to provide search capabilities of a catalog. All of this under the umbrella of visualization. 
 
 ### References
 
 Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
-
 2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
