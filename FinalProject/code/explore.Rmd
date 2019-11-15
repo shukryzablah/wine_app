@@ -1,5 +1,6 @@
 ---
 title: "Exploration"
+author: "Shukry Zablah and Emily Ye"
 output: pdf_document
 ---
 
@@ -7,6 +8,10 @@ output: pdf_document
 library(tidyverse)
 library(GGally)
 ```
+
+## Countries 
+
+It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience. 
 
 ```{r}
 path <- "../data/winemag-data-130k-v2.csv"
@@ -32,5 +37,87 @@ Wine <- read_csv(path,
 ```
 
 ```{r}
-
+Wine %>% glimpse()
 ```
+
+```{r}
+top_countries_tbl <- Wine %>%
+    mutate(country = fct_explicit_na(country)) %>%
+    mutate(country = fct_lump(country, 12)) %>%
+    count(country, sort = TRUE) %>%
+    mutate(prop = n / sum(n))
+
+top_countries_tbl
+```
+
+The top 13 categories, including the lumped-together category of "Other" consist of those categories which have a count consisting of more than 1% of the observations in the dataset. 
+
+```{r}
+top_countries_tbl %>%
+    mutate(prop_cumulative = cumsum(prop)) %>%
+    ggplot(aes(x = seq_along(country), y = prop_cumulative)) +
+    geom_point() +
+    geom_label(aes(label = country)) +
+    scale_y_continuous(limits = c(0, 1)) +
+    scale_x_continuous(breaks = seq(0, 13)) +
+    labs(x = "# Top Countries" , y = "Cumulative Proportion")
+```
+
+Note that most of the observations, in fact, more than 90% of the observations are contained in the 8 most represented countries and 80% on the top 4, and 60% on the top 2 (USA and France). 
+
+It looks like it will be possible to create an interactive map. Now we need to geolocate the wineries. Worst case scenario we have the countries and their representation in the dataset. 
+
+Another interesting fact is that since 40% of the observations come from the USA, then perhaps it will be possible to get historical information to add quantitative predictors to our dataset, but it is not crucial since our focus is in the presentation of the data. 
+
+## Wineries
+
+Is there a similar concentration for the wineries? Turns out no. Lumping won't work because there are just so many wineries and there aren't any ones that particularly dominate. 
+
+```{r}
+top_wineries_tbl <- Wine %>%
+    count(winery, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+mean_prop <- mean(top_wineries_tbl$prop)
+mean_prop
+
+top_wineries_tbl %>%
+    ggplot(aes(x = prop)) +
+    geom_histogram(bins = 30) +
+    geom_vline(xintercept = mean_prop, color = "red")
+```
+
+The table below summarizes the information for the proportions of each winery.
+
+```{r}
+summary(top_wineries_tbl)
+```
+
+From the summary we note that half of the wineries contain more than 90% of the observations, and 25% of the wineries contain more than 70% of the observations. However there are 16757 wineries which means that 25% of the observations is around 4000 wineries. 
+
+If we need to geolocate the wineries and we run into trouble, then perhaps only doing half will suffice for our visualization.
+
+## Variety
+
+## Designation
+
+## Taster
+
+## Points
+
+## Price 
+
+## Description
+
+Here is an example of the description. 
+
+```{r}
+Wine %>% pull(description) %>% pluck(1)
+```
+
+This is one example. We will want to extract features from the description in order to incorporate this information into any model we do. 
+
+## Regions and Province
+
+We don't have any reason to believe these will be terribly useful but we explore them for completion. 
