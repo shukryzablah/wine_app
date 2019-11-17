@@ -15,12 +15,84 @@ output:
 ---
 
 ```{r, setup, include=FALSE}
-library(dplyr)
+library(mosaic)
+library(tm)
+library(text2vec)
 library(tidytext)
 library(forcats)
+library(stringr)
 ```
 
-Following https://www.tidytextmining.com/tfidf.html
+Calculating Term Frequency and Inverse Document Frequency by points:
+
+Code based from https://cran.r-project.org/web/packages/tidytext/vignettes/tf_idf.html.
+
+```{r}
+wine_wordsdtm <- Wine %>%
+  unnest_tokens(word, description) %>%
+  count(points, word, sort = TRUE)
+
+total_words <- wine_wordsdtm %>%
+  group_by(points) %>%
+  summarize(total = sum(n))
+
+wine_total_words <- left_join(wine_wordsdtm, total_words)
+
+wine_total_words <- wine_total_words %>%
+  bind_tf_idf(word, points, n) %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+
+wine_total_words
+```
+
+We see that the words with the highest TF-IDF values are the unique words in the 100-point wine descriptions that occur only 1-2 in the vocabulary of all the descriptions. 
+
+Let's look specifically at the words with the highest TF-IDF values for 80-point wines:
+
+```{r}
+wine_total_words %>%
+  filter(points == 80) %>%
+  arrange(desc(tf_idf))
+```
+
+These words occur mroe frequently than the words in the 100-point descriptions. However, the frequencies are pretty low. It might be useful to separate points into different levels (perhaps 80-86 is low rating, 97-93 is medium, and 94-100 is high).
+
+```{r}
+Wine$rating <- cut(Wine$points,
+                   breaks=c(-Inf, 86, 93, Inf),
+                   labels=c("low","medium","high"))
+```
+
+```{r}
+wine_wordsdtm2 <- Wine %>%
+  unnest_tokens(word, description) %>%
+  count(rating, word, sort = TRUE)
+
+total_words2 <- wine_wordsdtm2 %>%
+  group_by(rating) %>%
+  summarize(total = sum(n))
+
+wine_total_words2 <- left_join(wine_wordsdtm2, total_words2)
+
+wine_total_words2 <- wine_total_words2 %>%
+  bind_tf_idf(word, rating, n) %>%
+  select(-total) %>%
+  arrange(desc(tf_idf))
+
+wine_total_words2
+```
+
+```{r}
+wine_total_words2 %>%
+  filter(rating == "high") %>%
+  arrange(desc(tf_idf))
+```
+
+
+We can also look at TF-IDF based on variables other than points. For example, we can look at TF-IDF values based on variety of wine.
+
+Code based from https://www.tidytextmining.com/tfidf.html.
 
 ```{r}
 wine_words <- Wine %>%
@@ -35,7 +107,8 @@ plot_wine <- wine_words %>%
   mutate(variety = factor(variety, levels = c("Pinot Noir",
                                             "Cabernet Sauvignon", 
                                             "Chardonnay",
-                                            "Red Blend")))
+                                            "Red Blend", 
+                                            "Riesling")))
 
 plot_wine %>% 
   group_by(variety) %>% 
@@ -49,4 +122,40 @@ plot_wine %>%
   coord_flip()
 ```
 
+A lot of the words with high TF-IDF values by variety are obvious - for example, the word with the highest TF-IDF value for riesling is "riesling."
+
+Following https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec:
+
+```{r}
+wine_explore <- Wine %>% 
+    select(description, points) %>%
+    mutate(description = gsub('[[:punct:] ]+',' ',tolower(description)))
+
+words <- str_split(wine_explore$description, ' ')
+all_words <- data.frame(points = rep(wine_explore$points, sapply(words, length)), words = unlist(words))
+```
+
+```{r}
+words_grouped <- all_words %>%
+    group_by(words) %>%
+    summarize(
+        points = mean(points),
+        count = n()
+    ) %>%
+    filter(count > 10) %>%
+    arrange(desc(points))
+
+top <- words_grouped[1:10,] %>% cbind(top_bottom = 'top')
+bottom <- words_grouped[(nrow(words_grouped) - 9):nrow(words_grouped),] %>% cbind(top_bottom = 'bottom')
+top_bottom <- rbind(top, bottom)
+
+ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom)) +
+    geom_bar(stat = 'identity') +
+    coord_flip() + 
+    scale_fill_manual(values = c('#00b4fb', '#fa6560')) + 
+    ggtitle('Wine Review Words with the Highest and Lowest Mean Points', subtitle = NULL) +
+    xlab('Average Points') +
+    ylab('Word') + 
+    labs(fill = 'Top or Bottom')
+```
 
