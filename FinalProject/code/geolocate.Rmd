@@ -1,17 +1,31 @@
 ---
 title: "Geolocating Wineries"
-output: pdf_document
+output: 
+  pdf_document:
+    df_print: kable
 ---
+
+```{r}
+knitr::opts_chunk$set(
+                      collapse = TRUE,
+                      eval = FALSE)
+options(crayon.enabled = FALSE)
+```
 
 # Using ggmap
 
-```{r}
+```{r, eval = TRUE}
 library(ggmap)
 library(tidyverse)
 ```
 
 ```{r}
-path <- "../data/winemag-data-130k-v2.csv"
+data_dir <- "../data"
+file_name <- "winemag-data-130k-v2.csv"
+path <- file.path(data_dir, file_name)
+```
+
+```{r}
 Wine <- read_csv(path,
                  col_types = cols(
                      X1 = col_double(),
@@ -30,12 +44,71 @@ Wine <- read_csv(path,
                      winery = col_character()),
                  progress = FALSE
                  ) %>%
-    rename(id = X1)
+    rename(id = X1) %>%
+    mutate(id = id + 1)
+```
+
+The `mutate_geocoded` function from `ggmap` would be great if it actually had some error handling. Instead, we will form our own function. 
+
+```{r}
+subset <- Wine %>%
+    count(winery, country) %>%
+    mutate(address = paste0(winery, " ", country)) %>%
+    sample_n(10) 
 ```
 
 ```{r}
-Wine %>%
-    count(winery, country) %>%
-    mutate(address = paste0(winery, " ", country)) %>%
-    mutate_geocode(address)
+geocode_robustly <-
+    possibly(
+        insistently(
+            quietly(geocode),
+            rate = rate_delay(0.1, max_times = 2)),
+        otherwise = list(result = tibble(lon = NA_real_, lat = NA_real_))
+    )
+
+```
+
+```{r}
+locations <- subset %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+subset %>% bind_cols(locations)
+```
+
+And now we geocode all of the dataset. 
+
+```{r, cache=TRUE}
+# 1. Add address column to geocode
+Wine <- Wine %>%
+    mutate(address = paste0(winery, " ", country))
+
+# 2. Get unique addresses
+Addresses <- Wine %>%
+    count(address) %>%
+    select(-n)
+
+# 3. Geocode unique addresses
+Locations <- Addresses %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+# 4. Bind location info to addresses
+Addresses <- Addresses %>%
+    bind_cols(Locations) 
+
+# 5. Join into original dataset
+Geocoded_Wine <- Wine %>%
+    left_join(Addresses, by = "address")
+options(tinytex.verbose = TRUE)
+# 4. Save geocoded dataset
+file_name <- "geocoded.csv"
+Geocoded_Wine %>% write_csv(path = file.path(data_dir, file_name))
+```
+
+## Verify
+
+```{r, eval = TRUE, message=FALSE}
+Wine <- read_csv("../data/geocoded.csv") %>%
+    glimpse()
 ```
