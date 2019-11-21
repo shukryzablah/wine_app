@@ -15,17 +15,54 @@ output:
 ---
 
 ```{r, setup, include=FALSE}
-library(mosaic)
+library(tidyverse)
 library(tm)
 library(text2vec)
 library(tidytext)
-library(forcats)
-library(stringr)
 ```
 
-Calculating Term Frequency and Inverse Document Frequency by points:
+```{r}
+Wine <- read_csv("../data/winemag-data-130k-v2.csv",
+                 col_types = cols(
+                     X1 = col_double(),
+                     country = col_character(),
+                     description = col_character(),
+                     designation = col_character(),
+                     points = col_double(),
+                     price = col_double(),
+                     province = col_character(),
+                     region_1 = col_character(),
+                     region_2 = col_character(),
+                     taster_name = col_character(),
+                     taster_twitter_handle = col_character(),
+                     title = col_character(),
+                     variety = col_character(),
+                     winery = col_character()),
+                 progress = FALSE
+                 ) %>%
+    rename(id = X1)
+```
+
+
+Calculating Term Frequency and Inverse Document Frequency:
 
 Code based from https://www.tidytextmining.com/tfidf.html.
+
+```{r}
+Wine_tfidf <- Wine %>%
+  unnest_tokens(word, description) %>%
+  count(points, id, word, sort = TRUE) %>%
+  bind_tf_idf(word, id, n) %>%
+  group_by(id) %>% 
+  summarise(tf_idf = sum(tf_idf))
+```
+
+```{r}
+Wine_tfidf %>%
+  filter(points == 100) %>%
+  arrange(desc(tf_idf))
+```
+
 
 ```{r}
 Wine_points_tfidf <- Wine %>%
@@ -37,7 +74,8 @@ Wine_points_tfidf <- Wine %>%
 ```{r}
 Wine_points_tfidf %>%
   filter(points == 100) %>%
-  arrange(desc(tf_idf))
+  arrange(desc(tf_idf)) %>%
+  head()
 ```
 
 We see that the words with the highest TF-IDF values are the unique words in the 100-point wine descriptions that occur only 1-2 in the vocabulary of all the descriptions. 
@@ -45,9 +83,10 @@ We see that the words with the highest TF-IDF values are the unique words in the
 Let's look specifically at the words with the highest TF-IDF values for 80-point wines:
 
 ```{r}
-wine_total_words %>%
+Wine_points_tfidf %>%
   filter(points == 80) %>%
-  arrange(desc(tf_idf))
+  arrange(desc(tf_idf)) %>%
+  head()
 ```
 
 These words occur more frequently than the words in the 100-point descriptions. However, the frequencies are pretty low. It might be useful to separate points into different levels (perhaps 80-86 is low rating, 97-93 is medium, and 94-100 is high).
@@ -68,7 +107,8 @@ Wine_rating_tfidf <- Wine %>%
 ```{r}
 Wine_rating_tfidf %>%
   filter(rating == "high") %>%
-  arrange(desc(tf_idf))
+  arrange(desc(tf_idf)) %>%
+  head()
 ```
 
 We can also look at TF-IDF based on variables other than points. For example, we can look at TF-IDF values based on variety of wine.
