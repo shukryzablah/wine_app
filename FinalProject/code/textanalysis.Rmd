@@ -64,6 +64,7 @@ Wine_tfidf <- Wine %>%
 Wine <- left_join(Wine, Wine_tfidf, by = "id")
 ```
 
+First let's look at TF-IDF by points:
 
 ```{r}
 Wine_points_tfidf <- Wine %>%
@@ -144,7 +145,7 @@ plot_wine %>%
 
 A lot of the words with high TF-IDF values by variety are obvious - for example, the word with the highest TF-IDF value for riesling is "riesling."
 
-Following https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec:
+Following https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec, we can look at words with the highest and lowest mean scores:
 
 ```{r}
 wine_explore <- Wine %>% 
@@ -178,4 +179,39 @@ ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom
     ylab('Word') + 
     labs(fill = 'Top or Bottom')
 ```
+
+### Prediction
+
+Let's look at predicting wines.
+
+Because we have a lot of missing data and a mixture of numerical and categorical data, methods like random forest are difficult to implement.
+
+could look at k-prototypes clustering? https://cran.r-project.org/web/packages/clustMixType/clustMixType.pdf or k-modes clustering?
+could also look at gradient boosting like in the example above
+
+**Light gradient boosting**
+
+First, we'll adjust our dataset and remove the id, description, title, and taster_twitter_handle variables.
+
+```{r}
+Wine2 <- Wine %>%
+  select(-id, -description, -title, -taster_twitter_handle)
+```
+
+
+Next, we will split our data into training and test sets.
+
+```{r}
+set.seed(1)
+x <- model.matrix(points ~ ., Wine2)[ , -1]  
+y <- Wine2$points
+grid <- 10^seq(10, -2, length = 100)
+n <- nrow(Wine2)
+train_index <- sample(1:n, 0.8 * n)
+test_index <- setdiff(1:n, train_index)
+train <- Wine2[train_index, ] 
+test <- Wine2[test_index, ]
+y.test <- y[test_index]
+```
+
 
