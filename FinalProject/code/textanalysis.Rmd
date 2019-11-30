@@ -19,6 +19,7 @@ library(tidyverse)
 library(tm)
 library(text2vec)
 library(tidytext)
+library(randomForest)
 ```
 
 ```{r}
@@ -44,9 +45,13 @@ Wine <- read_csv("../data/winemag-data-130k-v2.csv",
 ```
 
 
-Calculating Term Frequency and Inverse Document Frequency:
+### Calculating Term Frequency-Inverse Document Frequency
 
 Code based from https://www.tidytextmining.com/tfidf.html.
+
+Term Frequency-Inverse Document Frequency (TF-IDF) is a statistic that evaluates how important a word is in a document or corpus. It is calculated through dividing the term frequency of how often a word appears in a document by its inverse document frequency, which is the inverse of the proportion of how many documents in a corpus have a certain term.  Therefore, high frequency terms but with little importance such as "the" or "and" will have low TF-IDF values, and so TF-IDF can be used as a weighting measure in ranking.
+
+To use TF-IDF in our prediction model, we will use a sum of the TF-IDF per description as a variable.
 
 ```{r}
 Wine_tfidf <- Wine %>%
@@ -55,12 +60,8 @@ Wine_tfidf <- Wine %>%
   bind_tf_idf(word, id, n) %>%
   group_by(id) %>% 
   summarise(tf_idf = sum(tf_idf))
-```
 
-```{r}
-Wine_tfidf %>%
-  filter(points == 100) %>%
-  arrange(desc(tf_idf))
+Wine <- left_join(Wine, Wine_tfidf, by = "id")
 ```
 
 
