@@ -2,7 +2,7 @@
 
 library(dplyr)
 
-Wines <- readr::read_csv("data/geocoded.csv")
+Wines <- readr::read_csv("data/geocoded.csv.gz")
 
 Wineries <- Wines %>%
     group_by(address, lat, lon) %>%
