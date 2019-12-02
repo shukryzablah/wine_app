@@ -22,7 +22,7 @@ library(tidytext)
 library(textmineR)
 library(SnowballC)
 library(caret)
-#library(lightgbm)
+library(gbm)
 ```
 
 ```{r}
@@ -236,147 +236,70 @@ Wine$description[27585] #27585 is the token number for the fourth wine
 
 Yikes. This seems like a bad wine.
 
+Let's look at the most frequent terms:
+
+```{r}
+tf_mat <- TermDocFreq(dtm = dtm)
+head(tf_mat[ order(tf_mat$term_freq, decreasing = TRUE) , ], 10)
+```
+
+Unsurprisingly, the most frequently used words in the descriptions are "wine," "flavor," and "fruit."
+
+Now let's see how we can use the DTM in a data frame for prediction.
+
+```{r}
+# remove any tokens that were in 2000 or fewer documents
+dtm_small <- dtm[ , colSums(dtm > 0) > 2000 ]
+ncol(dtm_small)
+```
+
+We're left with 279 words that are used in more than 2000 documents in the form of indicator variables per wine.
 
 ### Prediction
 
 Let's look at predicting wines.
 
-Because we have a lot of missing data and a mixture of numerical and categorical data, methods like random forest are difficult to implement.
+Because we have a lot of missing data and a mixture of numerical and categorical data, methods like random forest are difficult to implement. Let's try gradient boosting, which in R can include categorical variables of up to 1024 categories (unlike randomForest, which only allows up to 53 categories per categorical variable).
 
-could look at k-prototypes clustering? https://cran.r-project.org/web/packages/clustMixType/clustMixType.pdf or k-modes clustering?
-could also look at gradient boosting like in the example above
-
-**Light gradient boosting**
-
-First, we'll adjust our dataset and remove the id, description, title, and taster_twitter_handle variables.
+First, we need to clean our data:
 
 ```{r}
-Wine3 <- Wine2 %>%
-  select(-id, -description, -title, -region_2, -taster_twitter_handle) %>%
+dtm_df <- as.data.frame(as.matrix(dtm_small))
+dtm_df$id <- c(0:129970)
+Wine_dtm <- left_join(Wine2, dtm_df, by = "id")
+Wine_dtm <- Wine_dtm %>%
+  select(-id, -description, -designation, -region_1, -region_2, -taster_name,
+         -taster_twitter_handle, -title, -winery) %>%
   mutate(country = as.factor(country),
-         designation = as.factor(designation),
          province = as.factor(province),
-         region_1 = as.factor(region_1),
-         taster_name = as.factor(taster_name),
-         variety = as.factor(variety),
-         winery = as.factor(winery))
+         variety = as.factor(variety))
 ```
 
-
-Next, we will split our data into training and test sets.
-
 ```{r}
+#Test/Train split
 set.seed(1)
-smp_size <- floor(0.8 * nrow(Wine2))
-train_ind <- sample(seq_len(nrow(Wine2)), size = smp_size)
-train <- Wine2[train_ind, ]
-test <- Wine2[-train_ind, ]
-```
+smp_size <- floor(0.8 * nrow(Wine_dtm))
+train_ind <- sample(seq_len(nrow(Wine_dtm)), size = smp_size)
+train <- Wine_dtm[train_ind, ]
+test <- Wine_dtm[-train_ind, ]
 
-Next, we will use a function that will clean the data.
+#boosting
+boost_wine <- gbm(points ~ ., 
+                   data = train, 
+                   distribution = "gaussian", 
+                   n.trees = 5, #just 5 for now because larger numbers take a long time to run
+                   interaction.depth = 4)
+```
 
 ```{r}
-clean <- function(train, test) {
-  prep_fun <- tolower
-  tok_fun <- function(x) {
-    word_tokenizer(x) %>% lapply(function(x) SnowballC::wordStem(x, language='en'))
-  }
-  
-  it_train <- itoken(train$description, 
-                    preprocessor = prep_fun, 
-                    tokenizer = tok_fun, 
-                    ids = train$X1, 
-                    progressbar = T)
-  vocab <- create_vocabulary(it_train, stopwords = stopwords('en'), ngram = c(1L, 2L))
-  
-  pruned_vocab <- prune_vocabulary(vocab, 
-                                  term_count_min = 10, 
-                                  doc_proportion_max = 0.5,
-                                  doc_proportion_min = 0.001)
-  # Create Document-Term Matrix
-  vectorizer <- vocab_vectorizer(pruned_vocab)
-  dtm_train <- create_dtm(it_train, vectorizer)
-
-  # define tfidf model
-  tfidf <- TfIdf$new()
-  dtm_train_tfidf <- fit_transform(dtm_train, tfidf)
-
-  # Tokenize test data and apply training vocab
-  it_test <- itoken(test$description, 
-                    preprocessor = prep_fun, 
-                    tokenizer = tok_fun, 
-                    ids = test$X1, 
-                    progressbar = T)
-  
-  dtm_test_tfidf <- create_dtm(it_test, vectorizer) %>% 
-    transform(tfidf)
-  
-  list(
-    'train' = as.matrix(cbind(dtm_train_tfidf, train$price)),
-    'test' = as.matrix(cbind(dtm_test_tfidf, test$price))
-  )
-  
-}
+boost_estimate <- predict(boost_wine, 
+                         newdata = test, 
+                         n.trees = 5)
+mse_boost <- mean((boost_estimate - test$points)^2)
+mse_boost
 ```
-
-5-fold CV
 
 ```{r}
-folds <- createFolds(y = train$points, k = 5)
-
-predicted <- data.frame()
-all_rmse <- c()
-
-#doesn't work because can't install lightgbm
-for(i in 1:length(folds)) {
-  
-  print(paste('CV fold', i, 'of', length(folds), sep = ' '))
-  
-  train_set <- train[-folds[[i]],]
-  valid_set <- train[folds[[i]],]
-  cleaned <- clean(train_set, valid_set)
-  train_inputs <- cleaned[['train']]
-  valid_inputs <- cleaned[['test']]
-  
-  train_labels <- as.matrix(train[-folds[[i]], 'points'])
-  valid_labels <- as.matrix(train[folds[[i]], 'points'])
-
-  dtrain <- lgb.Dataset(data = train_inputs, label = train_labels)
-  dtest <- lgb.Dataset.create.valid(dtrain, data = valid_inputs, label = valid_labels)
-  valids <- list(test = dtest)
-  
-  model <- lgb.train(objective = 'regression', 
-                     metric = 'rmse',
-                     data = dtrain,
-                     num_iterations = 10000,
-                     valid = valids,
-                     learning_rate = 0.1,
-                     num_leaves = 50,
-                     early_stopping_rounds = 50,
-                     verbosity = -1,
-                     verbose = -1,
-                     record = TRUE)
-  
-  all_rmse <- c(all_rmse, model$best_score)
-  
-  # Predict on the validation set
-  predictions <- predict(model, valid_inputs)
-  
-  predicted <- rbind(predicted, data.frame(
-    predicted = predictions,
-    rating = valid_labels
-  ))
-}
+top_n(summary(boost_wine), 3, rel.inf) #only 3 because everything else is 0 rip
 ```
-
-
-**K-Prototypes Clustering**
-
-```{r}
-library(clustMixType)
-# apply k-prototypes
-kpres <- kproto(Wine3, 20)
-```
-
-
 
