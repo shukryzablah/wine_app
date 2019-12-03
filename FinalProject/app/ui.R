@@ -31,8 +31,8 @@ navbarPage("Wine Explorer", id = "nav",
                                       h2("Wine Explorer"),
                                       selectInput("distinguish",
                                                   "Distinguish",
-                                                  c("avg_price",
-                                                    "avg_points"))
+                                                  c("avg_points",
+                                                    "avg_price"))
                                       )
                         )
                     ),

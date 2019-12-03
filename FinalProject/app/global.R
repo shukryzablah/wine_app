@@ -8,6 +8,6 @@ Wineries <- Wines %>%
     group_by(address, lat, lon) %>%
     summarize(num_entries = n(), 
               avg_points = mean(points, na.rm = TRUE),
-              avg_price = mean(points, na.rm = TRUE)) %>%
+              avg_price = mean(price, na.rm = TRUE)) %>%
     tidyr::drop_na() %>%
     ungroup()
