@@ -48,7 +48,7 @@ Wine <- read_csv("../data/winemag-data-130k-v2.csv",
 ```
 
 
-### Calculating Term Frequency-Inverse Document Frequency
+### Term Frequency-Inverse Document Frequency
 
 Code based from https://www.tidytextmining.com/tfidf.html.
 
@@ -116,38 +116,6 @@ Wine_rating_tfidf %>%
   head()
 ```
 
-We can also look at TF-IDF based on variables other than points. For example, we can look at TF-IDF values based on variety of wine.
-
-```{r}
-wine_words <- Wine %>%
-  unnest_tokens(word, description) %>%
-  count(variety, word, sort = TRUE)
-```
-
-```{r}
-plot_wine <- wine_words %>%
-  bind_tf_idf(word, variety, n) %>%
-  mutate(word = fct_reorder(word, tf_idf)) %>%
-  mutate(variety = factor(variety, levels = c("Pinot Noir",
-                                            "Cabernet Sauvignon", 
-                                            "Chardonnay",
-                                            "Red Blend", 
-                                            "Riesling")))
-
-plot_wine %>% 
-  group_by(variety) %>% 
-  top_n(15, tf_idf) %>% 
-  ungroup() %>%
-  mutate(word = reorder(word, tf_idf)) %>%
-  ggplot(aes(word, tf_idf, fill = variety)) +
-  geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "tf-idf") +
-  facet_wrap(~variety, ncol = 2, scales = "free") +
-  coord_flip()
-```
-
-A lot of the words with high TF-IDF values by variety are obvious - for example, the word with the highest TF-IDF value for riesling is "riesling."
-
 Following https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec, we can look at words with the highest and lowest mean scores:
 
 ```{r}
@@ -183,7 +151,7 @@ ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom
     labs(fill = 'Top or Bottom')
 ```
 
-Nobody wants to drink a wine that's described as "gluey" or "fake." How often do these words show up though? To find out, we need to create a document-term matrix, which shows the the frequency of terms that occur in a collection of documents.
+Nobody wants to drink a wine that's described as "gluey" or "fake." How often do these words show up though, and how can we use them in a predictive model? To find out, we need to create a document-term matrix, which shows the the frequency of terms that occur in a collection of documents.
 
 ### Creating a Document-Term Matrix
 
@@ -282,24 +250,35 @@ smp_size <- floor(0.8 * nrow(Wine_dtm))
 train_ind <- sample(seq_len(nrow(Wine_dtm)), size = smp_size)
 train <- Wine_dtm[train_ind, ]
 test <- Wine_dtm[-train_ind, ]
+```
 
+We'll use a gradient boosting algorithm to create our prediction model.
+
+```{r, cache = TRUE}
 #boosting
+set.seed(1)
 boost_wine <- gbm(points ~ ., 
                    data = train, 
                    distribution = "gaussian", 
-                   n.trees = 5, #just 5 for now because larger numbers take a long time to run
+                   n.trees = 1000,
                    interaction.depth = 4)
 ```
+
+We can check to see how well our model does with prediction on the test set:
 
 ```{r}
 boost_estimate <- predict(boost_wine, 
                          newdata = test, 
-                         n.trees = 5)
-mse_boost <- mean((boost_estimate - test$points)^2)
-mse_boost
+                         n.trees = 1000)
+mse_boost <- mean((boost_estimate - test$points)^2); mse_boost
 ```
 
+The mean squared error is `r mse_boost`. Let's look at the most important features in the model.
+
 ```{r}
-top_n(summary(boost_wine), 3, rel.inf) #only 3 because everything else is 0 rip
+top_n(summary(boost_wine), 20, rel.inf)
 ```
+
+Unsurprisingly, the variable with the most relative influence is price, followed by variety, then province.  The words "rich" and "complex" have slightly higher influence than the tf_idf variable, then followed by the stemmed words "simpl," "delici," "long," and "black."
+
 
