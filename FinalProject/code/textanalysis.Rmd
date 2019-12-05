@@ -25,6 +25,8 @@ library(caret)
 library(gbm)
 ```
 
+A key part of this project is learning how to extract features from text. In the case of our data with wine reviews, the largest body of text we have is from the description variable. First we'll load in our data.
+
 ```{r}
 Wine <- read_csv("../data/winemag-data-130k-v2.csv",
                  col_types = cols(
@@ -47,86 +49,7 @@ Wine <- read_csv("../data/winemag-data-130k-v2.csv",
     rename(id = X1)
 ```
 
-
-### Term Frequency-Inverse Document Frequency
-
-Code based from https://www.tidytextmining.com/tfidf.html.
-
-Term Frequency-Inverse Document Frequency (TF-IDF) is a statistic that evaluates how important a word is in a document or corpus. It is calculated through dividing the term frequency of how often a word appears in a document by its inverse document frequency, which is the inverse of the proportion of how many documents in a corpus have a certain term.  Therefore, high frequency terms but with little importance such as "the" or "and" will have low TF-IDF values, and so TF-IDF can be used as a weighting measure in ranking.
-
-To use TF-IDF in our prediction model, we will use a sum of the TF-IDF per description as a variable.
-
-```{r}
-Wine_tfidf <- Wine %>%
-  unnest_tokens(word, description) %>%
-  count(points, id, word, sort = TRUE) %>%
-  bind_tf_idf(word, id, n) %>%
-  group_by(id) %>% 
-  summarise(tf_idf = sum(tf_idf))
-
-Wine2 <- left_join(Wine, Wine_tfidf, by = "id")
-```
-
-First let's look at TF-IDF by points:
-
-```{r}
-Wine_points_tfidf <- Wine %>%
-  unnest_tokens(word, description) %>%
-  count(points, word, sort = TRUE) %>%
-  bind_tf_idf(word, points, n)
-```
-
-```{r}
-Wine_points_tfidf %>%
-  group_by(word) %>%
-  summarize(mean_tfidf = mean(tf_idf)) %>%
-  arrange(desc(mean_tfidf)) %>%
-  head(n = 300)
-```
-
-
-
-```{r}
-Wine_points_tfidf %>%
-  filter(points == 100) %>%
-  arrange(desc(tf_idf)) %>%
-  head()
-```
-
-We see that the words with the highest TF-IDF values are the unique words in the 100-point wine descriptions that occur only 1-2 in the vocabulary of all the descriptions. 
-
-Let's look specifically at the words with the highest TF-IDF values for 80-point wines:
-
-```{r}
-Wine_points_tfidf %>%
-  filter(points == 80) %>%
-  arrange(desc(tf_idf)) %>%
-  head()
-```
-
-These words occur more frequently than the words in the 100-point descriptions. However, the frequencies are pretty low. It might be useful to separate points into different levels (perhaps 80-86 is low rating, 97-93 is medium, and 94-100 is high).
-
-```{r}
-Wine$rating <- cut(Wine$points,
-                   breaks=c(-Inf, 86, 93, Inf),
-                   labels=c("low","medium","high"))
-```
-
-```{r}
-Wine_rating_tfidf <- Wine %>%
-  unnest_tokens(word, description) %>%
-  count(rating, word, sort = TRUE) %>%
-  bind_tf_idf(word, rating, n)
-```
-
-```{r}
-Wine_rating_tfidf %>%
-  filter(rating == "high") %>%
-  arrange(desc(tf_idf)) %>%
-  head()
-```
-
-Following https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec, we can look at words with the highest and lowest mean scores:
+First, we can look at some exploratory plots. For example, following [code from Kaggle user nnnnick (2018)](https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec), we can look at the words in the wine description with the highest and lowest mean scores:
 
 ```{r}
 wine_explore <- Wine %>% 
@@ -134,10 +57,12 @@ wine_explore <- Wine %>%
     mutate(description = gsub('[[:punct:] ]+',' ',tolower(description)))
 
 words <- str_split(wine_explore$description, ' ')
-all_words <- data.frame(points = rep(wine_explore$points, sapply(words, length)), words = unlist(words))
+all_words <- data.frame(points = rep(wine_explore$points, 
+                                     sapply(words, length)), 
+                        words = unlist(words))
 ```
 
-```{r}
+```{r, fig.width = 7}
 words_grouped <- all_words %>%
     group_by(words) %>%
     summarize(
@@ -148,24 +73,25 @@ words_grouped <- all_words %>%
     arrange(desc(points))
 
 top <- words_grouped[1:10,] %>% cbind(top_bottom = 'top')
-bottom <- words_grouped[(nrow(words_grouped) - 9):nrow(words_grouped),] %>% cbind(top_bottom = 'bottom')
+bottom <- words_grouped[(nrow(words_grouped) - 9):nrow(words_grouped),] %>% 
+  cbind(top_bottom = 'bottom')
 top_bottom <- rbind(top, bottom)
 
 ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom)) +
     geom_bar(stat = 'identity') +
     coord_flip() + 
     scale_fill_manual(values = c('#00b4fb', '#fa6560')) + 
-    ggtitle('Wine Review Words with the Highest and Lowest Mean Points', subtitle = NULL) +
-    xlab('Average Points') +
-    ylab('Word') + 
-    labs(fill = 'Top or Bottom')
+    ggtitle("Wine Review Words with the Highest and Lowest Mean Points") +
+    xlab("Average Points") +
+    ylab("Word") + 
+    labs(fill = "Top or Bottom")
 ```
 
 Nobody wants to drink a wine that's described as "gluey" or "fake." How often do these words show up though, and how can we use them in a predictive model? To find out, we need to create a document-term matrix, which shows the the frequency of terms that occur in a collection of documents.
 
-### Creating a Document-Term Matrix
+### Creating a Document-Term Matrix (DTM)
 
-DTM created from code here: https://datawarrior.wordpress.com/2018/01/22/document-term-matrix-text-mining-in-r-and-python/
+A DTM is a matrix in which the rows correspond to documents in a corpus (in our case, each wine description constitutes a document) and each column corresponds to terms, or words. This code to create a DTM for our wine dataset is based on [Ho (2018)](https://datawarrior.wordpress.com/2018/01/22/document-term-matrix-text-mining-in-r-and-python/).
 
 ```{r}
 #Create DTM
@@ -178,7 +104,7 @@ dtm <- CreateDtm(Wine$description,
                 stem_lemma_function = wordStem)
 ```
 
-The document-term matrix that is created is huge - about 43 megabytes with close to 3 billion elements. We need to create some functions that will allow us to use the DTM:
+The resulting DTM is huge - about 43 megabytes with close to 3 billion elements. We need to create some functions that will allow us to use the DTM:
 
 ```{r}
 #Create functions
@@ -208,29 +134,42 @@ Wine$title[c(as.numeric(fakewines$token))]
 
 Let's look at the description of the fourth wine, Love 2015 Cabernet Sauvignon (Vino de la Tierra de Castilla):
 
-```{r}
-Wine$description[27585] #27585 is the token number for the fourth wine
+```{r, results = "asis"}
+#27585 is the token number for the fourth wine
+winedescription <- Wine$description[27585]
+winedescription
 ```
 
 Yikes. This seems like a bad wine.
 
-Let's look at the words with the highest mean TF-IDF values:
+From our document-term matrix, we could create a list of the top words by frequency and use those in our predictive model. However, if we were basing our top words by term frequency, we would be including words that are used so often that they probably don't have much meaning. Therefore, a better way to rank our words would be term frequency-inverse document frequency, which will be explained in the next section.
+
+### Term Frequency-Inverse Document Frequency
+
+Term Frequency-Inverse Document Frequency (TF-IDF) is a statistic that evaluates how important a word is in a document or corpus. It is calculated through dividing the term frequency of how often a word appears in a document by its inverse document frequency, which is the inverse of the proportion of how many documents in a corpus have a certain term.  Therefore, high frequency terms but with little importance such as "the" or "and" will have low TF-IDF values, and so TF-IDF can be used as a weighting measure in ranking.
+
+TF-IDF will be useful in our prediction model becuase we can include the words with the higest mean TF-IDF values in our model. Let's see what these words with the highest mean TF-IDF values are. The following code has been modified from the one of the cran.R vignettes of the `textmineR` package [(Jones, 2019)](https://cran.r-project.org/web/packages/textmineR/vignettes/a_start_here.html).
 
 ```{r}
 tf_mat <- TermDocFreq(dtm = dtm)
 head(tf_mat[ order(tf_mat$term_freq, decreasing = TRUE) , ], 10)
-tfidf_mat <- t(dtm[ , tf_mat$term ]) * tf_mat$idf #calculating tf-idf
+tfidf_mat <- t(dtm[ , tf_mat$term ]) * tf_mat$idf #calculating TF-IDF
 tfidf <- t(tfidf_mat)
 tfidf_means <- colMeans(tfidf) #calculating mean values
 tfidf_means <- as.data.frame(tfidf_means)
 tfidf_means$word <- rownames(tfidf_means)
 top200 <- tfidf_means %>% arrange(desc(tfidf_means)) %>% top_n(200, tfidf_means) #top 200
+```
 
+
+```{r, fig.width = 7}
+# Plot the words with highest mean TF-IDF values
 tfidf_means %>%
   arrange(desc(tfidf_means)) %>%
   top_n(15, tfidf_means) %>%
   ggplot(aes(reorder(word, tfidf_means), tfidf_means)) +
   geom_bar(stat = "identity") +
+  ggtitle("Wine Review Words with Highest Mean TF-IDF Value") +
   xlab("word") +
   ylab("mean TF-IDF value") +
   coord_flip()
@@ -241,7 +180,7 @@ tfidf_means %>%
 Now let's see how we can use the DTM in a data frame for prediction.
 
 ```{r}
-# match dtm column names to the words with top 200 mean tf-idf values
+# Match dtm column names to the words with top 200 mean tf-idf values
 dtm_small <- dtm[, colnames(dtm) %in% top200$word]
 ncol(dtm_small)
 ```
@@ -250,16 +189,16 @@ We're left with a document-term matrix with the 200 words with the highest mean 
 
 ### Prediction
 
-Let's look at predicting wines.
+Let's look at predicting wines. We are looking to build a model that can be implemented for an average user of our web app to input values and text and receive an output of points.
 
 Because we have a lot of missing data and a mixture of numerical and categorical data, methods like random forest are difficult to implement. Let's try gradient boosting, which in R can include categorical variables of up to 1024 categories (unlike randomForest, which only allows up to 53 categories per categorical variable).
 
-First, we need to clean our data:
+First, we need to clean our data. We will remove variables that either 1) are factor variables with more than 1024 categories, or 2) are variables that are not necessarily relevant to an average person looking to explore wine. An example of variables in the latter category are `taster_name` and `taster_twitter_handle`.
 
 ```{r}
 dtm_df <- as.data.frame(as.matrix(dtm_small))
 dtm_df$id <- c(0:129970)
-Wine_dtm <- left_join(Wine2, dtm_df, by = "id")
+Wine_dtm <- left_join(Wine, dtm_df, by = "id")
 Wine_dtm <- Wine_dtm %>%
   select(-id, -description, -designation, -region_1, -region_2, -taster_name,
          -taster_twitter_handle, -title, -winery) %>%
@@ -268,8 +207,10 @@ Wine_dtm <- Wine_dtm %>%
          variety = as.factor(variety))
 ```
 
+Now we will split our data into training and test sets.
+
 ```{r}
-#Test/Train split
+# Test/Train split
 set.seed(1)
 smp_size <- floor(0.8 * nrow(Wine_dtm))
 train_ind <- sample(seq_len(nrow(Wine_dtm)), size = smp_size)
@@ -277,9 +218,7 @@ train <- Wine_dtm[train_ind, ]
 test <- Wine_dtm[-train_ind, ]
 ```
 
-We'll use a gradient boosting algorithm to create our prediction model.
-
-First let's do a boosting model with 5 trees. This is not a lot of trees, so we'd expect that the model wouldn't do so well with prediction on our test set.
+Now we can apply a gradient boosting algorithm to create our prediction model. First, let's try a boosting model with 5 trees. This is not a lot of trees, so we'd expect that the model wouldn't do so well with prediction on our test set.
 
 ```{r}
 set.seed(1)
@@ -289,12 +228,12 @@ boost_wine10 <- gbm(points ~ .,
                    n.trees = 5,
                    interaction.depth = 4)
 
-boost_estimate10 <- predict(boost_wine10, #predict on test set 
+boost_estimate10 <- predict(boost_wine10, # predict on test set 
                          newdata = test,
                          n.trees = 5,
                          na.action = NULL)
 mse_boost10 <- mean((boost_estimate10 - test$points)^2)
-sqrt_mse10 <- sqrt(mse_boost10) #calculate MSE
+sqrt_mse10 <- sqrt(mse_boost10) # calculate MSE
 ```
 
 With this model, the prediction is off by an average of `r sqrt_mse10` points. That's not great. Let's compare this square root of the MSE to that of a model where we use 500 trees.
@@ -307,14 +246,14 @@ boost_wine <- gbm(points ~ .,
                    n.trees = 500,
                    interaction.depth = 4)
 
-# saving the model
+# Save model to .rds file
 saveRDS(boost_wine, "boost_wine500.rds")
 ```
 
 Running the above chunk takes too long, so we've loaded the model in the chunk below. We can check to see how well this model with 500 trees does with prediction on the test set:
 
 ```{r}
-boost_wine <- readRDS("boost_wine500.rds") #load model
+boost_wine <- readRDS("boost_wine500.rds") # load model
 boost_estimate <- predict(boost_wine, 
                          newdata = test, 
                          n.trees = 500,
@@ -341,21 +280,25 @@ Below, we have created a function called `estimatepoints` that uses inputs of co
 estimatepoints <- function(country, price, description, province, variety) {
   newwine <- data.frame(id = 1, country, price, description, province, variety) %>%
     mutate(description = as.character(description))
-  dtm_newwine <- CreateDtm(newwine$description, #create DTM for new wine
+  
+  # Create DTM for new wine
+  dtm_newwine <- CreateDtm(newwine$description,
                 doc_names = newwine$id,
                 ngram_window = c(1, 1),
                 lower = TRUE,
                 remove_punctuation = TRUE,
                 remove_numbers = TRUE,
                 stem_lemma_function = wordStem)
-
-  dtm_newwine2 <- dtm_newwine[, colnames(dtm_newwine) %in% top200$word] #words in top 200
+  
+  dtm_newwine2 <- dtm_newwine[, colnames(dtm_newwine) %in% top200$word] # words in top 200
   dtm_newwine_df <- as.data.frame(as.matrix(t(dtm_newwine2)))
   otherwords <- top200 %>%
-    filter(!word %in% dtm_newwine_df) #find the top 200 words not in new wine but in dtm
-  dtm_newwine_df[otherwords$word] <- 0 #fill the words not in new wine to df with 0
+    filter(!word %in% dtm_newwine_df) # find the top 200 words not in new wine but in dtm
+  dtm_newwine_df[otherwords$word] <- 0 # fill the words not in new wine to df with 0
 
-  newwine <- cbind(newwine, dtm_newwine_df) #fill in rest of data
+  newwine <- cbind(newwine, dtm_newwine_df) # fill in rest of data
+  
+  # Estimate points of new wine
   test_estimate <- predict(boost_wine, 
                          newdata = newwine,
                          n.trees = 100,
@@ -363,6 +306,9 @@ estimatepoints <- function(country, price, description, province, variety) {
 
   return(test_estimate)
 }
+
+# Save function & top200 data frame for use in Shiny app
+save(top200, estimatepoints, file="estimatepoints_function.Rda")
 ```
 
 So now to predict the number of points our Portuguese wine would receive, we can just plug in the input values.
