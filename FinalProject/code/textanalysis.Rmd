@@ -78,6 +78,16 @@ Wine_points_tfidf <- Wine %>%
 
 ```{r}
 Wine_points_tfidf %>%
+  group_by(word) %>%
+  summarize(mean_tfidf = mean(tf_idf)) %>%
+  arrange(desc(mean_tfidf)) %>%
+  head(n = 300)
+```
+
+
+
+```{r}
+Wine_points_tfidf %>%
   filter(points == 100) %>%
   arrange(desc(tf_idf)) %>%
   head()
@@ -204,24 +214,39 @@ Wine$description[27585] #27585 is the token number for the fourth wine
 
 Yikes. This seems like a bad wine.
 
-Let's look at the most frequent terms:
+Let's look at the words with the highest mean TF-IDF values:
 
 ```{r}
 tf_mat <- TermDocFreq(dtm = dtm)
 head(tf_mat[ order(tf_mat$term_freq, decreasing = TRUE) , ], 10)
+tfidf_mat <- t(dtm[ , tf_mat$term ]) * tf_mat$idf #calculating tf-idf
+tfidf <- t(tfidf_mat)
+tfidf_means <- colMeans(tfidf) #calculating mean values
+tfidf_means <- as.data.frame(tfidf_means)
+tfidf_means$word <- rownames(tfidf_means)
+top200 <- tfidf_means %>% arrange(desc(tfidf_means)) %>% top_n(200, tfidf_means) #top 200
+
+tfidf_means %>%
+  arrange(desc(tfidf_means)) %>%
+  top_n(15, tfidf_means) %>%
+  ggplot(aes(reorder(word, tfidf_means), tfidf_means)) +
+  geom_bar(stat = "identity") +
+  xlab("word") +
+  ylab("mean TF-IDF value") +
+  coord_flip()
 ```
 
-Unsurprisingly, the most frequently used words in the descriptions are "wine," "flavor," and "fruit."
+"Wine" and "fruit" have especially high mean TF-IDF values, followed by "black," "flavor," "acid," and "aroma."
 
 Now let's see how we can use the DTM in a data frame for prediction.
 
 ```{r}
-# remove any tokens that were in 2000 or fewer documents
-dtm_small <- dtm[ , colSums(dtm > 0) > 2000 ]
+# match dtm column names to the words with top 200 mean tf-idf values
+dtm_small <- dtm[, colnames(dtm) %in% top200$word]
 ncol(dtm_small)
 ```
 
-We're left with 279 words that are used in more than 2000 documents in the form of indicator variables per wine.
+We're left with a document-term matrix with the 200 words with the highest mean tf-idf value.
 
 ### Prediction
 
@@ -254,31 +279,102 @@ test <- Wine_dtm[-train_ind, ]
 
 We'll use a gradient boosting algorithm to create our prediction model.
 
-```{r, cache = TRUE}
-#boosting
+First let's do a boosting model with 5 trees. This is not a lot of trees, so we'd expect that the model wouldn't do so well with prediction on our test set.
+
+```{r}
+set.seed(1)
+boost_wine10 <- gbm(points ~ ., 
+                   data = train, 
+                   distribution = "gaussian", 
+                   n.trees = 5,
+                   interaction.depth = 4)
+
+boost_estimate10 <- predict(boost_wine10, #predict on test set 
+                         newdata = test,
+                         n.trees = 5,
+                         na.action = NULL)
+mse_boost10 <- mean((boost_estimate10 - test$points)^2)
+sqrt_mse10 <- sqrt(mse_boost10) #calculate MSE
+```
+
+With this model, the prediction is off by an average of `r sqrt_mse10` points. That's not great. Let's compare this square root of the MSE to that of a model where we use 500 trees.
+
+```{r, eval = FALSE}
 set.seed(1)
 boost_wine <- gbm(points ~ ., 
                    data = train, 
                    distribution = "gaussian", 
-                   n.trees = 1000,
+                   n.trees = 500,
                    interaction.depth = 4)
+
+# saving the model
+saveRDS(boost_wine, "boost_wine500.rds")
 ```
 
-We can check to see how well our model does with prediction on the test set:
+Running the above chunk takes too long, so we've loaded the model in the chunk below. We can check to see how well this model with 500 trees does with prediction on the test set:
 
 ```{r}
+boost_wine <- readRDS("boost_wine500.rds") #load model
 boost_estimate <- predict(boost_wine, 
                          newdata = test, 
-                         n.trees = 1000)
-mse_boost <- mean((boost_estimate - test$points)^2); mse_boost
+                         n.trees = 500,
+                         na.action = NULL)
+mse_boost <- mean((boost_estimate - test$points)^2)
+sqrt_mse <- sqrt(mse_boost)
 ```
 
-The mean squared error is `r mse_boost`. Let's look at the most important features in the model.
+The square root of the mean squared error is `r sqrt_mse` - much smaller than that of the model with only 5 trees. Let's look at the most important features in this more accurate model.
 
 ```{r}
-top_n(summary(boost_wine), 20, rel.inf)
+top_n(summary(boost_wine), 10, rel.inf)
 ```
 
-Unsurprisingly, the variable with the most relative influence is price, followed by variety, then province.  The words "rich" and "complex" have slightly higher influence than the tf_idf variable, then followed by the stemmed words "simpl," "delici," "long," and "black."
+Unsurprisingly, the variable with the most relative influence is price, followed by variety, then province. Stemmed words that are the most important are "rich", "complex," "simpl."
 
+Let's see how this model predicts the points of a wine that is not in the data set.
 
+For example, we can predict the points of a Portuguese Red Touriga Nacional wine that is $35 from Dão with the description: "This is a solidly structured wine that has big tannins in place. That will change as the wine ages further, bringing the rich black fruits forward and reveling in the perfumed acidity of the wine. Drink from 2021."
+
+Below, we have created a function called `estimatepoints` that uses inputs of country, price, description, province, and variety and returns a points estimate based on our model.
+
+```{r}
+estimatepoints <- function(country, price, description, province, variety) {
+  newwine <- data.frame(id = 1, country, price, description, province, variety) %>%
+    mutate(description = as.character(description))
+  dtm_newwine <- CreateDtm(newwine$description, #create DTM for new wine
+                doc_names = newwine$id,
+                ngram_window = c(1, 1),
+                lower = TRUE,
+                remove_punctuation = TRUE,
+                remove_numbers = TRUE,
+                stem_lemma_function = wordStem)
+
+  dtm_newwine2 <- dtm_newwine[, colnames(dtm_newwine) %in% top200$word] #words in top 200
+  dtm_newwine_df <- as.data.frame(as.matrix(t(dtm_newwine2)))
+  otherwords <- top200 %>%
+    filter(!word %in% dtm_newwine_df) #find the top 200 words not in new wine but in dtm
+  dtm_newwine_df[otherwords$word] <- 0 #fill the words not in new wine to df with 0
+
+  newwine <- cbind(newwine, dtm_newwine_df) #fill in rest of data
+  test_estimate <- predict(boost_wine, 
+                         newdata = newwine,
+                         n.trees = 100,
+                         na.action = NULL)
+
+  return(test_estimate)
+}
+```
+
+So now to predict the number of points our Portuguese wine would receive, we can just plug in the input values.
+
+```{r}
+estimatepoints(country = "Portugal",
+               price = 35,
+               description = "This is a solidly structured wine that has big tannins in place.
+               That will change as the wine ages further, bringing the rich black fruits
+               forward and reveling in the perfumed acidity of the wine. Drink from 2021.",
+               province = "Dão",
+               variety = "Touriga Nacional, Portuguese Red")
+```
+
+Our model predicts this wine would receive about 89 points. Not bad.
