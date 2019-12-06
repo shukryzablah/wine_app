@@ -100,11 +100,86 @@ If we need to geolocate the wineries and we run into trouble, then perhaps only 
 
 ## Variety
 
+Variety of a wine refers to the type of grape that is used - for example, among white grape wines, there are varieties such as Sauvignon Blanc, Chardonnay, and Riesling. Among red grape wines, some varieties include Merlot, Cabernet Sauvignon, and Pinot Noir.
+
+```{r}
+top_varieties_tbl <- Wine %>%
+    count(variety, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_varieties_tbl)
+
+top_varieties_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+We can see from the summary that with among wine variety, 25% of the varieties include more than 97% of of the wines and half of the varieties account for more than 99% of the observed wines. Additionally, Pinot Noir accounts for more than 10% of the wines, followed by Chardonnay with 9.0%, Cabernet Sauvignon with 7.3%, and Red Blend with 6.9%.
+
 ## Designation
+
+Designation is a tricky variable to work with. It refers to a label placed on the wine by the winemaker in regulation with rules of the country, although not every country has the same rules. For example, the designation of "Reserve" wine generally means the wine has been set aside to age for a longer time than other wines generally would, and it often implies a higher quality. While "Reserva" refers to reserve wines in Spain, and "Riserva" to those in Italy, the two countries have different rules about how long the wine must be aged for in order to receive their respective designations. Other countries, like the U.S., don't have any rules in general. Given this general lack of universality of designation, this variable likely will not mean much in our project, but we can still look at its characteristics.
+
+```{r}
+top_designation_tbl <- Wine %>%
+    count(designation, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_designation_tbl)
+
+top_designation_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+While 28.8% of the wines do not have a designation, 25% of the designations contain more than 73% of the wines. We see that of the most common 5 designations, three of them are related to reserve wines but in different languages, while the other two refer to estate wines - wines in which the grapes are grown and the wine is made in the same location.
 
 ## Taster
 
+The tasters are Wine Enthusiast Magazine wine reviewers.
+
+```{r}
+top_taster_tbl <- Wine %>%
+    mutate(taster_name = fct_explicit_na(taster_name)) %>%
+    mutate(taster_name = fct_lump(taster_name, 15)) %>%
+    count(taster_name, sort = TRUE) %>%
+    mutate(prop = n / sum(n))
+
+top_taster_tbl
+```
+
+While 20% of the wines do not have tasters listed, 19.6% of the wines were tasted by Roger Voss, followed by 11.6% which were tasted by Michael Schachner. A potentially interesting side project could be to try and differentiate the wine descriptions between tasters, or to search for patterns in each taster's preferred wines.
+
+We can speculate if any of the tasters are biased for more positive or negative reviews by looking at mean points per taster:
+
+```{r}
+Wine %>%
+  group_by(taster_name) %>%
+  summarize(meanpoints = mean(points)) %>%
+  arrange(desc(meanpoints))
+```
+
+The mean points per taster range between 85.9 and 90.6. Although there are likely many factors underlying these differences in points between reviewers, if I were a wine maker, I would want Anne Krebiehl MW or Matt Kettmann reviewing my wine, not Alexander Peartree.
+
 ## Points
+
+Points is the variable we will be trying to predict.
+
+```{r}
+points_tbl <- Wine %>%
+    count(points, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(points_tbl)
+
+points_tbl %>%
+  ggplot(aes(x = points, y = prop)) +
+  geom_bar(stat = "identity")
+```
+
 
 ## Price 
 
