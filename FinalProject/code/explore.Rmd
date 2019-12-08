@@ -183,6 +183,17 @@ points_tbl %>%
 
 ## Price 
 
+```{r}
+price_tbl <- Wine %>%
+    count(price, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(price_tbl)
+```
+
+We can see from the table that the price for wine ranges between 4 and 3,300 USD. More than 98% of the wines are under 101.20 USD, and more than 99.7% of the wines are less than 203.5 USD.
+
 ## Description
 
 Here is an example of the description. 
