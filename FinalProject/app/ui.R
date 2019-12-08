@@ -1,5 +1,3 @@
-library(leaflet)
-
 navbarPage("Wine Explorer", id = "nav",
            
            #########
@@ -7,12 +5,12 @@ navbarPage("Wine Explorer", id = "nav",
            #########
            tabPanel("Interactive Map",
                     div(class = "outer",
-                        ## insert custom css
+                        ## insert custom css and js
                         tags$head(
                                  includeCSS("styles.css"),
                                  includeScript("gomap.js")
                              ),
-                        ## map
+                        ## plot map
                         ## set dim to px if not using styles.css
                         leafletOutput("map",
                                       width = "100%", 
@@ -26,13 +24,22 @@ navbarPage("Wine Explorer", id = "nav",
                                       left = "auto",
                                       right = 20,
                                       bottom = "auto",
-                                      width = 330,
+                                      width = 500,
                                       height = "auto",
                                       h2("Wine Explorer"),
                                       selectInput("distinguish",
                                                   "Distinguish",
                                                   c("avg_points",
-                                                    "avg_price"))
+                                                    "avg_price")),
+                                      selectizeInput("variety",
+                                                     "Variety",
+                                                     choices = varieties,
+                                                     multiple = TRUE,
+                                                     options = list(
+                                                         maxOptions = 5,
+                                                         maxItems = 3)
+                                                     ),
+                                      plotlyOutput("price")
                                       )
                         )
                     ),

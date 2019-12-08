@@ -1,22 +1,25 @@
-library(leaflet)
 library(RColorBrewer)
-library(dplyr)
+library(stringr)
+library(purrr)
 
 function(input, output, session) {
 
     ######################
     ## Helper Functions ##
     ######################
-    showWineryPopup <- function(winery_address, lat, lng) {
+    show_winery_popup <- function(winery_address, lat, lng) {
         selectedWinery <- Wineries %>%
             filter(address == winery_address)
         
         content <- as.character(tagList(
             tags$h4("Name: ", selectedWinery$address),
             tags$br(),
-            sprintf("Avg Points: %s", selectedWinery$avg_points),
+            sprintf("Number of Entries in Database: %s",
+                    selectedWinery$num_entries),
             tags$br(),
-            sprintf("Avg Price: %s", selectedWinery$avg_price)
+            sprintf("Avg Points: %s", round(selectedWinery$avg_points),2),
+            tags$br(),
+            sprintf("Avg Price: %s", round(selectedWinery$avg_price,2))
         ))
         
         leafletProxy("map") %>%
@@ -29,13 +32,19 @@ function(input, output, session) {
     #########
     output$map <- renderLeaflet({
         leaflet() %>%
-            addTiles() %>%
+            addTiles(urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+                     attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>') %>%
             addEasyButton(
                 easyButton(
                     icon="fa-globe",
                     title="World-View Zoom",
-                    onClick=JS("function(btn, map){ map.setZoom(2); }")))
+                    onClick=JS("function(btn, map){ map.setZoom(3); }"))) %>%
+            addMiniMap(tiles = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
+                       toggleDisplay = TRUE,
+                       width = 300,
+                       height = 300)
     })
+
 
     ###############################
     ## Observers (Map Modifiers) ##
@@ -45,18 +54,21 @@ function(input, output, session) {
     observe({
         distinguishBy <- input$distinguish
         colorData <- Wineries[[distinguishBy]]
-        pal <- colorBin("viridis", colorData, 5, pretty = FALSE)
-        radius <- Wineries[[distinguishBy]] /
-            max(Wineries[[distinguishBy]], na.rm = TRUE) * 10
+        pal <- colorQuantile("viridis", colorData, 3)
 
-        leafletProxy("map", data = Wineries) %>%
+        mapData <- Wineries
+        if(!is.null(input$variety)) {
+            mapData <- Wineries %>%
+                filter(map_lgl(varieties, ~ any(input$variety %in% .x)))
+        }
+       
+        leafletProxy("map", data = mapData) %>%
+            clearMarkerClusters() %>%
             clearShapes() %>%
             fitBounds(~min(lon), ~min(lat), ~max(lon), ~max(lat)) %>%
-            addCircleMarkers(~lon, ~lat, radius = radius,
-                       layerId = ~address, stroke = FALSE,
-                       fillOpacity = 0.5, fillColor = pal(colorData),
-                       clusterOptions = markerClusterOptions(),
-                       clusterId = "wineCluster") %>%
+            addCircleMarkers(~lon, ~lat, radius = ~num_entries / 10,
+                             layerId = ~address, stroke = FALSE,
+                             fillOpacity = 0.5, fillColor = pal(colorData)) %>%
             addLegend("bottomleft", pal = pal,
                       values = colorData, title = distinguishBy,
                       layerId = "colorLegend") 
@@ -71,7 +83,7 @@ function(input, output, session) {
             return()
 
         isolate({
-            showWineryPopup(event$id, event$lat, event$lng)
+            show_winery_popup(event$id, event$lat, event$lng)
         })
     })
 
@@ -88,10 +100,20 @@ function(input, output, session) {
             leafletProxy("map") %>%
                 clearPopups() %>%
                 fitBounds(lon - dist, lat - dist, lon + dist, lat + dist)
-            showWineryPopup(address, lat, lon)
+            show_winery_popup(address, lat, lon)
         })
     })
 
+
+    ############################
+    ## Plotly Summary Graphic ##
+    ############################
+    output$price <- renderPlotly({
+        ggplotly(
+            ggplot(diamonds, aes(x = carat)) +
+            geom_histogram()
+        )
+    })
 
     
     #############

@@ -1,6 +1,6 @@
 ---
-title: "Exploration"
-author: "Shukry Zablah and Emily Ye"
+title: "Exploratory Analysis"
+author: "YZ Analytics"
 output: pdf_document
 ---
 
