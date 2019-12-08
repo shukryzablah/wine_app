@@ -62,7 +62,7 @@ all_words <- data.frame(points = rep(wine_explore$points,
                         words = unlist(words))
 ```
 
-```{r, fig.width = 7}
+```{r, fig.width = 7, fig.height = 4}
 words_grouped <- all_words %>%
     group_by(words) %>%
     summarize(
@@ -80,10 +80,10 @@ top_bottom <- rbind(top, bottom)
 ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom)) +
     geom_bar(stat = 'identity') +
     coord_flip() + 
-    scale_fill_manual(values = c('#00b4fb', '#fa6560')) + 
+    scale_fill_manual(values = c('#fed86f', '#97040b')) + 
     ggtitle("Wine Review Words with the Highest and Lowest Mean Points") +
-    xlab("Average Points") +
-    ylab("Word") + 
+    xlab("Word") +
+    ylab("Average Points") + 
     labs(fill = "Top or Bottom")
 ```
 
