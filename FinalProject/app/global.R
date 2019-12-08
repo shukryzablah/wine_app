@@ -18,3 +18,4 @@ Wineries <- Wines %>%
     mutate_at(vars(starts_with("avg")), round, 2)
 
 varieties <- Wines %>% pull(variety) %>% unique()
+countries <- Wines %>% pull(country) %>% unique()
