@@ -49,6 +49,40 @@ navbarPage("Wine Explorer", id = "nav",
            #############
            tabPanel("Catalog",
                     DT::dataTableOutput("winetable")
+                    ),
+
+           ############################
+           ## Model Point Estimation ##
+           ############################
+           tabPanel("Quality Estimate",
+                    selectizeInput("country",
+                                   "Country",
+                                   selected = "Portugal",
+                                   choices = countries,
+                                   options = list(
+                                       maxOptions = 10)
+                                   ),
+                    sliderInput("price",
+                                "Price",
+                                min = 0,
+                                max = 100,
+                                step = 1,
+                                value = 35
+                                ),
+                    textAreaInput("description",
+                                  "Description",
+                                  value = "This is a solidly structured wine that has big tannins in place. That will change as the wine ages further, bringing the rich black fruits forward and reveling in the perfumed acidity of the wine. Drink from 2021."),
+                    textInput("province",
+                              "Province",
+                              value = "Dão"),
+                    selectizeInput("variety2",
+                                   "Variety",
+                                   selected = "Portuguese Red",
+                                   choices = varieties,
+                                   options = list(
+                                       maxOptions = 10)
+                                  ),
+                    textOutput("estimate")
                     )
            )
 

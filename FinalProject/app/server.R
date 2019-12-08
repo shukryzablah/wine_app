@@ -1,6 +1,12 @@
 library(RColorBrewer)
 library(stringr)
 library(purrr)
+library(SnowballC)
+library(gbm)
+library(textmineR)
+
+load("data/estimatepoints_function.Rda")
+boost_wine <- readRDS("data/boost_wine500.rds")
 
 function(input, output, session) {
 
@@ -137,4 +143,17 @@ function(input, output, session) {
                       options = list(ajax = list(url = action)),
                       escape = FALSE)
     })
+
+    ############################
+    ## Model Point Estimation ##
+    ############################
+
+    output$estimate <- renderText({
+        estimatepoints(country = input$country,
+                       price = input$price,
+                       description = input$description,
+                       province = input$province,
+                       variety = input$variety2)
+    })
+    
 }
