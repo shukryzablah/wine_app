@@ -4,14 +4,14 @@ author: "YZ Analytics"
 output: pdf_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 library(GGally)
 ```
 
 ## Countries 
 
-It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience. 
+It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience.
 
 ```{r}
 path <- "../data/winemag-data-130k-v2.csv"
@@ -203,7 +203,3 @@ Wine %>% pull(description) %>% pluck(1)
 ```
 
 This is one example. We will want to extract features from the description in order to incorporate this information into any model we do. 
-
-## Regions and Province
-
-We don't have any reason to believe these will be terribly useful but we explore them for completion. 
