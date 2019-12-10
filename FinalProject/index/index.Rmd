@@ -24,7 +24,7 @@ output:
 #acknowledgements: |
 #  I want to thank a few people.
 #dedication: |
-  You can have a dedication here if you wish. 
+#  You can have a dedication here if you wish. 
 bibliography: bib/thesis.bib
 # Download your specific bibliography database file and refer to it in the line above.
 csl: csl/apa.csl
