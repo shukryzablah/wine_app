@@ -1,5 +1,5 @@
 ---
-title: "Text analysis"
+title: "Text Analysis and Prediction"
 author: "YZ Analytics"
 date: ""
 output: 
@@ -324,3 +324,55 @@ estimatepoints(country = "Portugal",
 ```
 
 Our model predicts this wine would receive about 89 points. Not bad.
+
+**Model with just description**
+
+The model we are using to predict points uses variables like price, province, and variety, which all have much higher relative influence compared to just the words in the description. What if we removed these variables with higher relative influence and looked just at how well words in the description can predict points?
+
+We will select just the points variable and the word variables and set up a training and test set to create the same gradient boosting model with just the word variables.
+
+```{r}
+Wine_justwords <- Wine_dtm %>%
+  select(-country, -price, -province, -variety) # leaves just the DTM of words
+
+# Train/Test split
+set.seed(1)
+smp_size2 <- floor(0.8 * nrow(Wine_justwords))
+train_ind2 <- sample(seq_len(nrow(Wine_justwords)), size = smp_size2)
+train2 <- Wine_justwords[train_ind2, ]
+test2 <- Wine_justwords[-train_ind2, ]
+```
+
+Now we can fit the model. Again, this algorithm takes a while to run, so the code to create the model is shown in the first code chunk below, but we will just load the model object into the next code chunk for analysis.
+
+```{r, eval = FALSE}
+set.seed(1)
+boost_wine_words <- gbm(points ~ ., 
+                   data = train2, 
+                   distribution = "gaussian", 
+                   n.trees = 500,
+                   interaction.depth = 4)
+
+# Save model to .rds file
+saveRDS(boost_wine_words, "boost_wine_words.rds")
+```
+
+```{r}
+boost_wine_words <- readRDS("boost_wine_words.rds") # load model
+boost_estimate_words <- predict(boost_wine_words, 
+                         newdata = test2, 
+                         n.trees = 500,
+                         na.action = NULL)
+mse_boost_words <- mean((boost_estimate_words - test2$points)^2)
+sqrt_mse_words <- sqrt(mse_boost_words); sqrt_mse_words
+```
+
+The model with just words performs a little worse than our model with price, variety, and province included with a mean prediction error of `r sqrt_mse_words` points. We can look at which words have the most relative influence in this model:
+
+```{r}
+top_n(summary(boost_wine_words), 10, rel.inf)
+```
+
+The word "rich" has the highest relative influence, followed by words like "vineyard," "complex," the stemmed "simpl," and the stemmed "concentr."
+
+However, because the model with price, province, and variety included has a lower MSE, and because these variables would not be difficult to find for an average wine drinker, we will use the model with 500 trees with price, province, and variety included to build our prediction engine.
