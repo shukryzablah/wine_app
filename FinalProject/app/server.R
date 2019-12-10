@@ -5,9 +5,6 @@ library(SnowballC)
 library(gbm)
 library(textmineR)
 
-load("data/estimatepoints_function.Rda")
-boost_wine <- readRDS("data/boost_wine500.rds")
-
 function(input, output, session) {
 
     ######################
@@ -110,18 +107,6 @@ function(input, output, session) {
         })
     })
 
-
-    ############################
-    ## Plotly Summary Graphic ##
-    ############################
-    output$price <- renderPlotly({
-        ggplotly(
-            ggplot(diamonds, aes(x = carat)) +
-            geom_histogram()
-        )
-    })
-
-    
     #############
     ## Catalog ##
     #############
@@ -154,7 +139,7 @@ function(input, output, session) {
                                 description = input$description,
                                 province = input$province,
                                 variety = input$variety2)
-        paste0("Score:", round(score, 5))
+        paste0("Points: ", round(score, 5))
     })
     
 }
