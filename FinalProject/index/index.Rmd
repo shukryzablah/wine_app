@@ -12,7 +12,7 @@ knit: "bookdown::render_book"
 site: bookdown::bookdown_site
 output: 
   thesisdown::thesis_pdf: default
-#  thesisdown::thesis_gitbook: default
+  thesisdown::thesis_gitbook: default
 # If you are creating a PDF you'll need to write your preliminary content here or
 # use code similar to line 19 for the files.  If you are producing in a different
 # format than PDF, you can delete or ignore lines 19-30 in this YAML header.
@@ -71,22 +71,86 @@ on chapters.
 
 # Introduction {.unnumbered}
 
-Welcome to the _R Markdown_ thesis template. This template is based on (and in many places copied directly from) the Amherst College LaTeX template, but hopefully it will provide a nicer interface for those that have never used TeX or LaTeX before.  Using _R Markdown_ will also allow you to easily keep track of your analyses in **R** chunks of code, with the resulting plots and output included as well.  The hope is this _R Markdown_ template gets you in the habit of doing reproducible research, which benefits you long-term as a researcher, but also will greatly help anyone that is trying to reproduce or build onto your results down the road.
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      echo=FALSE,
+                      warning=FALSE)
 
-Hopefully, you won't have much of a learning period to go through and you will reap the benefits of a nicely formatted thesis.  The use of LaTeX in combination with _Markdown_ is more consistent than the output of a word processor, much less prone to corruption or crashing, and the resulting file is smaller than a Word file. While you may have never had problems using Word in the past, your thesis is likely going to be about twice as large and complex as anything you've written before, taxing Word's capabilities.  After working with _Markdown_ and **R** together for a few weeks, we are confident this will be your reporting style of choice going forward.
+library(readr)
+library(dplyr)
+library(tidyr)
+library(xtable)
+```
 
-<!-- 
-If you're still on the fence about using _R Markdown_, check out the resource for newbies available at <https://ismayc.github.io/rbasics-book/>. 
--->
+# Introduction
 
-**Why use it?**
+The first traces of wine were found in Georgia in 6000BCE (Watson, 2010). In **Figure 1** we show a map of more than 10 thousand wineries operational today.
 
-_R Markdown_ creates a simple and straightforward way to interface with the beauty of LaTeX.  Packages have been written in **R** to work directly with LaTeX to produce nicely formatting tables and paragraphs. In addition to creating a user friendly interface to LaTeX, _R Markdown_ also allows you to read in your data, to analyze it and to visualize it using **R** functions, and also to provide the documentation and commentary on the results of your project.  Further, it allows for **R** results to be passed inline to the commentary of your results.  You'll see more on this later.  
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/wineries.png}
+\caption{Map of more than 10000 wineries present in our dataset.}
+\end{figure}
 
-<!-- 
-Having your code and commentary all together in one place has a plethora of benefits!
--->
+For more than 8000 years, wine has been a relevant part of civilization, and yet, many people still do not think twice when they say "I'm not a wine person". Even then, there are many people that are also able to comfortably say: "This juicy, fruit-forward wine delectates the palate."
 
-**Who should use it?**
+This report and the accompanying [web application](https://szablah.shinyapps.io/wine/) aim for two things: 1) to showcase an advanced usage of visualization techniques in the context of a product for wine exploration, and 2) to expand and develop statistical techniques for a seamless incorporation into our product. Therefore, our main goal is to provide an immersive experience which leverages technology and builds upon the statistical/technical knowledge of a bachelor-level student, all within the context of wine. 
 
-Anyone who needs to use data analysis, math, tables, a lot of figures, complex cross-references, or who just cares about the final appearance of their document should use _R Markdown_. Of particular use should be anyone in the sciences, but the user-friendly nature of _Markdown_ and its ability to keep track of and easily include figures, automatically generate a table of contents, index, references, table of figures, etc. should make it of great benefit to nearly anyone writing a thesis project.
+# Data Provenance
+
+In this project we will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews. A small glimpse of what the data looks like is available below for convenience: 
+
+```{r}
+read_csv("../data/winemag-data-130k-v2.csv") %>%
+    glimpse()
+```
+
+Next we proceed with a discussion of the variables that are available in our dataset. 
+
+## Variables:
+
+Our dataset contains almost 130K observations, one for each wine review, and 18 variables. 
+
+Below, a description of the seventeen variables is included: 
+
+* id - The unique obervation identifier for reviews in our dataset
+* country - The country that the wine is from
+* description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc
+* designation - The vineyard within the winery where the grapes that made the wine are from
+* points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
+* price - The cost for a bottle of the wine
+* province - The province or state that the wine is from
+* region_1 - The wine growing area in a province or state (ie Napa)
+* region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
+* variety - The type of grapes used to make the wine (ie Pinot Noir)
+* winery - The winery that made the wine
+* title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
+* taster_name - name of the taster
+* taster_twitter_handle - Twitter handle of the taster
+----- below to be created --- 
+* year - To be extracted from the title variable.
+* address - A combination of the winery and the country
+* latitude - to be geocoded latitude
+* longitude - to be geocoded longitude 
+
+## An Assessment of Data Quality
+
+Frequently undergraduate analyses are done with carefully curated data or fail to consider the quality of the datasets used until the conclusion. We decided to assess the quality of our data through research of wine production as this was decisive in creating our product.
+
+In **Figure 2** we show a map of the most relevant wine producing regions in the world. It is clearly evident that our dataset does not represent the global production of wine because the presence of observations originating from either Russia and China is lacking. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/winerieswikipedia.jpg}
+\caption{Map from wikipedia with most relevant wine regions. Note the difference between the figure generated from our dataset (Figure 1) and this map.}
+\end{figure}
+
+Apart from the representativeness of our dataset, we consider the amount of information present, or the usefulness of our data. Most of the information we have is categorical, so we will have to generate some quantitative information to open up the number of possible analyzes or visualizations that are possible with our data.
+
+#### References 
+
+Nabi, Javaid. (2018). "Machine Learning - Text Processing." Towards Data Science. https://towardsdatascience.com/machine-learning-text-processing-1d5a2d638958
+Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
+2018. "Predicting Wine Ratings Using LightGBM + Text2Vec." Kaggle. https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec
+2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
+Watson, Ivan. (2010) "Unearthing Georgia's Wine Heritage." CNN. http://edition.cnn.com/2010/WORLD/europe/04/20/georgia.wine.heritage/
