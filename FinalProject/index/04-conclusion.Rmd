@@ -10,7 +10,7 @@ There were several limitations to the work in this project. They will be discuss
 
 ### Data Scraping
 
-The Kaggle dataset we used originated from Wine Magazine's website and was scraped in 2017. However, in the most recent years, almost 100,000 more wines have been added to the website. A future direction this project could go into would be to use the python scraper provided by the Kaggle user who uploaded the original dataset (Thoutt, 2017)[@thoutt2017] and scrape the newer wine reviews so there would be more up-to-date data.
+The Kaggle dataset we used originated from Wine Magazine's website and was scraped in 2017. However, in the most recent years, almost 100,000 more wines have been added to the website. A future direction this project could go into would be to use the python scraper provided by the Kaggle user who uploaded the original dataset^[@thoutt2017] and scrape the newer wine reviews so there would be more up-to-date data.
 
 ### Model Computation Run Time
 

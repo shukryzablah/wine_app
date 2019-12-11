@@ -1,3 +1,5 @@
+# Geocoding and Visualization
+
 ```{r include_packages_2, include = FALSE}
 # This chunk ensures that the thesisdown package is
 # installed and loaded. This thesisdown package includes
@@ -16,6 +18,10 @@ if(!require(thesisdown)){
   devtools::install_github("Amherst-Statistics/thesisdown")
   }
 library(thesisdown)
+library(ggmap)
+library(dplyr)
+library(readr)
+library(purrr)
 ```
 
 ## Why Geocode? 
@@ -28,21 +34,15 @@ The most convenient approach to perform geocoding in R is to use the `ggmap` pac
 
 ### Reading in the Data
 
-```{r}
-library(ggmap)
-library(dplyr)
-library(readr)
-library(purrr)
-```
 
-```{r}
+```{r directory, echo = TRUE}
 data_dir <- "../data"
 file_name <- "winemag-data-130k-v2.csv"
 
 path <- file.path(data_dir, file_name)
 ```
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
 Wine <- read_csv(path) %>% 
     rename(id = X1) %>% 
     mutate(id = id + 1) 
@@ -52,7 +52,7 @@ The `mutate_geocoded` function from `ggmap` would be great if it actually had so
 
 We will operate in a small sample of observations. This will allow us to test our function and then apply it to the whole dataset.
 
-```{r}
+```{r subset, echo = TRUE, eval = FALSE}
 set.seed(2019)
 
 subset <- Wine %>%
@@ -67,7 +67,7 @@ We mentioned that the function we use to geocode our observations has to be robu
 
 You can see all these components working together in the function below.
 
-```{r}
+```{r geocodefn, echo = TRUE}
 geocode_robustly <-
     possibly(
         insistently(
@@ -75,14 +75,13 @@ geocode_robustly <-
             rate = rate_delay(0.1, max_times = 2)),
         otherwise = list(result = tibble(lon = NA_real_, lat = NA_real_))
     )
-
 ```
 
 It is important to make sure that the `otherwise` argument matches the type of output given by the function that is wrapped by the `possibly` adverb.
 
 Finally, we apply our function to the addresses of the observations. 
 
-```{r}
+```{r locationsubset, echo = TRUE, eval = FALSE}
 locations <- subset %>%
     pull(address) %>%
     map_dfr(~ geocode_robustly(.x)$result)
@@ -94,11 +93,11 @@ Note that there will be some `NA` values in our location variables because we ar
 
 Confirming that our function is operating as desired, we can now we geocode all the units in our dataset. 
 
-### Putting it all Together
+### Putting It All Together
 
 In the code below we perform a further optimization by only geocoding the set of wineries. This allows us to avoid performing slow network requests on observations that have already been geocoded. The following represents every step taken to geocode our dataset with more than 100K observations. (The code will take some time to run.)
 
-```{r, eval=FALSE}
+```{r geocode, eval=FALSE, echo = TRUE}
 # 1. Add address column to geocode
 Wine <- Wine %>%
     mutate(address = paste0(winery, " ", country))
@@ -132,10 +131,11 @@ Now we have a geocoded version of the dataset that we can further refine for our
 
 To prove that our geocoding worked we can import our new dataset.
 
-```{r, message=FALSE}
+```{r verify, message=FALSE, echo = TRUE}
 Wine <- read_csv("../data/geocoded.csv.gz") %>%
     glimpse()
 ```
 
 ## Building Our Shiny App
 
+Our Shiny app can be found [here](https://szablah.shinyapps.io/wine/). There are 3 components: first, an interactive map that allows users to view wineries of the world and filter based on variety. Users can see average points or average price of the wines around the world. The second component of the Shiny app is a searchable catalog, where users can search among any of the wines included in the catalog and geolocate them on the map. The third and final component of our Shiny app is a prediction engine, which allows users to input their own wine with country, province, description, price, and variety, and our prediction model described in the previous chapter will produce an estimate of the number of points the inputted wine would receive.

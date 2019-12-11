@@ -303,29 +303,29 @@
     %\centerline{\hbox to \wd0 {\hbox{}\hrulefill\hbox{}}}
     \vfil
     %A Comprehensive Evaluation Report \\
-    Submitted to
-    \@thedepartmentof \ \@department \\
-    of \@institution \
-    in partial fulfillment \\
-    of the requirements for the degree \\
-    \@degree .\\
+    %Submitted to
+    %\@thedepartmentof \ \@department \\
+    %of \@institution \
+    %in partial fulfillment \\
+    %of the requirements for the degree \\
+    %\@degree .\\
 
-    \vfil
+    %\vfil
     %\centerline{\hbox to \wd0 {\hbox{}\hrulefill\hbox{}}}
     %\bigskip
     %\centerline{}
-	 \if@altadvisor
-    	Advisors:\\
-	\else
-	   Advisor: \\
-	 \fi
-    	\textit{\@advisor} \\
-    	\if@altadvisor
-    	\textit{\@altadvisor} \\
-		\fi
+	% \if@altadvisor
+ %   	Advisors:\\
+%	\else
+%	   Advisor: \\
+%	 \fi
+ %   	\textit{\@advisor} \\
+  %  	\if@altadvisor
+ %   	\textit{\@altadvisor} \\
+	%	\fi
 
 
-    \vfil
+   % \vfil
 
   \end{center}\par
   \end{titlepage}

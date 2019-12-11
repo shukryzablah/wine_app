@@ -113,10 +113,10 @@ $endif$
 \author{$author$}
 % The month and year that you submit your FINAL draft TO THE LIBRARY (May or December)
 \date{$date$}
-\division{$division$}
-\advisor{$advisor$}
-\institution{$institution$}
-\degree{$degree$}
+%\division{$division$}
+%\advisor{$advisor$}
+%\institution{$institution$}
+%\degree{$degree$}
 %If you have two advisors for some reason, you can use the following
 % Uncommented out by CII
 $if(altadvisor)$
@@ -125,7 +125,7 @@ $endif$
 % End of CII addition
 
 %%% Remember to use the correct department!
-\department{$department$}
+%\department{$department$}
 % if you're writing a thesis in an interdisciplinary major,
 % uncomment the line below and change the text as appropriate.
 % check the Senior Handbook if unsure.
@@ -232,13 +232,13 @@ $if(toc)$
   \tableofcontents
 $endif$
 
-$if(lot)$
-  \addcontentsline{toc}{chapter}{List of Tables}\listoftables
-$endif$
+%$if(lot)$
+ % \addcontentsline{toc}{chapter}{List of Tables}\listoftables
+%$endif$
 
-$if(lof)$
-  \addcontentsline{toc}{chapter}{List of Figures}\listoffigures
-$endif$
+%$if(lof)$
+ % \addcontentsline{toc}{chapter}{List of Figures}\listoffigures
+%$endif$
 
 
 \mainmatter % here the regular arabic numbering starts

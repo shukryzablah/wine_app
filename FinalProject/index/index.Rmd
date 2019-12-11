@@ -16,8 +16,16 @@ output:
 # If you are creating a PDF you'll need to write your preliminary content here or
 # use code similar to line 19 for the files.  If you are producing in a different
 # format than PDF, you can delete or ignore lines 19-30 in this YAML header.
-#abstract: |
-#  `r if(knitr:::is_latex_output()) paste(readLines("00-abstract.Rmd"), collapse = '\n  ')`
+chapter 1: |
+ `r if(knitr:::is_latex_output()) paste(readLines("01-chap1.Rmd"), collapse = '\n  ')`
+chapter 2: |
+ `r if(knitr:::is_latex_output()) paste(readLines("02-chap2.Rmd"), collapse = '\n  ')`
+chapter 3: |
+ `r if(knitr:::is_latex_output()) paste(readLines("03-chap3.Rmd"), collapse = '\n  ')`
+chapter 4: |
+ `r if(knitr:::is_latex_output()) paste(readLines("04-conclusion.Rmd"), collapse = '\n  ')`
+chapter 5: |
+ `r if(knitr:::is_latex_output()) paste(readLines("05-appendix.Rmd"), collapse = '\n  ')`
 # If you'd rather include the preliminary content in files instead of inline
 # like below, use a command like that for the abstract above.  Note that a tab is 
 # needed on the line after the |.
@@ -25,7 +33,7 @@ output:
 #  I want to thank a few people.
 #dedication: |
 #  You can have a dedication here if you wish. 
-bibliography: bib/thesis.bib
+bibliography: bib/winebib.bib
 # Download your specific bibliography database file and refer to it in the line above.
 csl: csl/apa.csl
 # Download your specific csl file and refer to it in the line above.
@@ -82,9 +90,7 @@ library(tidyr)
 library(xtable)
 ```
 
-# Introduction
-
-The first traces of wine were found in Georgia in 6000BCE (Watson, 2010). In **Figure 1** we show a map of more than 10 thousand wineries operational today.
+The first traces of wine were found in Georgia in 6000BCE^[@watson2010]. In **Figure 1** we show a map of more than 10 thousand wineries operational today.
 
 \begin{figure}[htbp]
 \centering
@@ -96,9 +102,9 @@ For more than 8000 years, wine has been a relevant part of civilization, and yet
 
 This report and the accompanying [web application](https://szablah.shinyapps.io/wine/) aim for two things: 1) to showcase an advanced usage of visualization techniques in the context of a product for wine exploration, and 2) to expand and develop statistical techniques for a seamless incorporation into our product. Therefore, our main goal is to provide an immersive experience which leverages technology and builds upon the statistical/technical knowledge of a bachelor-level student, all within the context of wine. 
 
-# Data Provenance
+## Data Provenance
 
-In this project we will be working with Kaggle's wine review data, found here: https://www.kaggle.com/zynicide/wine-reviews (Thoutt, 2017). There are close to 130,000 wine reviews. A small glimpse of what the data looks like is available below for convenience: 
+In this project we will be working with Kaggle's wine review data, found [here](https://www.kaggle.com/zynicide/wine-reviews)^[@thoutt2017]. There are close to 130,000 wine reviews from [Wine Magazine's website](https://www.winemag.com/?s=&drink_type=wine&page=0)^[@winemag]. A small glimpse of what the data looks like is available below for convenience: 
 
 ```{r}
 read_csv("../data/winemag-data-130k-v2.csv") %>%
@@ -107,9 +113,9 @@ read_csv("../data/winemag-data-130k-v2.csv") %>%
 
 Next we proceed with a discussion of the variables that are available in our dataset. 
 
-## Variables:
+### Variables:
 
-Our dataset contains almost 130K observations, one for each wine review, and 18 variables. 
+Our dataset contains almost 130K observations, one for each wine review, and 17 variables. 
 
 Below, a description of the seventeen variables is included: 
 
@@ -127,13 +133,14 @@ Below, a description of the seventeen variables is included:
 * title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
 * taster_name - name of the taster
 * taster_twitter_handle - Twitter handle of the taster
+
 ----- below to be created --- 
-* year - To be extracted from the title variable.
+
 * address - A combination of the winery and the country
 * latitude - to be geocoded latitude
 * longitude - to be geocoded longitude 
 
-## An Assessment of Data Quality
+### An Assessment of Data Quality
 
 Frequently undergraduate analyses are done with carefully curated data or fail to consider the quality of the datasets used until the conclusion. We decided to assess the quality of our data through research of wine production as this was decisive in creating our product.
 
@@ -142,15 +149,7 @@ In **Figure 2** we show a map of the most relevant wine producing regions in the
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\columnwidth]{../assets/winerieswikipedia.jpg}
-\caption{Map from wikipedia with most relevant wine regions. Note the difference between the figure generated from our dataset (Figure 1) and this map.}
+\caption{Map from Wikipedia with most relevant wine regions. Note the difference between the figure generated from our dataset (Figure 1) and this map.}
 \end{figure}
 
 Apart from the representativeness of our dataset, we consider the amount of information present, or the usefulness of our data. Most of the information we have is categorical, so we will have to generate some quantitative information to open up the number of possible analyzes or visualizations that are possible with our data.
-
-#### References 
-
-Nabi, Javaid. (2018). "Machine Learning - Text Processing." Towards Data Science. https://towardsdatascience.com/machine-learning-text-processing-1d5a2d638958
-Thoutt, Zack. (2017). "Wine Reviews." Kaggle. https://www.kaggle.com/zynicide/wine-reviews
-2018. "Predicting Wine Ratings Using LightGBM + Text2Vec." Kaggle. https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec
-2019. WineEnthusiast. https://www.winemag.com/?s=&drink_type=wine&page=0
-Watson, Ivan. (2010) "Unearthing Georgia's Wine Heritage." CNN. http://edition.cnn.com/2010/WORLD/europe/04/20/georgia.wine.heritage/

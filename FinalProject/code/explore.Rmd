@@ -4,14 +4,14 @@ author: "YZ Analytics"
 output: pdf_document
 ---
 
-```{r, message=FALSE}
+```{r}
 library(tidyverse)
 library(GGally)
 ```
 
 ## Countries 
 
-It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience.
+It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience. 
 
 ```{r}
 path <- "../data/winemag-data-130k-v2.csv"
@@ -170,8 +170,7 @@ Points is the variable we will be trying to predict.
 ```{r}
 points_tbl <- Wine %>%
     count(points, sort = TRUE) %>%
-    mutate(prop = n / sum(n)) %>%
-    mutate(prop_cumulative = cumsum(prop)) 
+    mutate(prop = n / sum(n))
 
 summary(points_tbl)
 
@@ -180,6 +179,7 @@ points_tbl %>%
   geom_bar(stat = "identity")
 ```
 
+The points look fairly normally distributed - there might be a slight right skew due to very few wines being rated over 95 points. The points range from 80-100 with both mean and median of 90 points.
 
 ## Price 
 
@@ -203,3 +203,22 @@ Wine %>% pull(description) %>% pluck(1)
 ```
 
 This is one example. We will want to extract features from the description in order to incorporate this information into any model we do. 
+
+## Province and Regions
+
+Province and regions are related to country for self-explanatory reasons. Region is a smaller area of a province. Let's just explore province.
+
+```{r}
+top_province_tbl <- Wine %>%
+    count(province, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_province_tbl)
+
+top_province_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+Unsurprisingly, provinces in the U.S., France, and Italy dominate the top provinces list. A whopping 28% of our wines come from California alone.

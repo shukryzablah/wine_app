@@ -91,7 +91,7 @@ Nobody wants to drink a wine that's described as "gluey" or "fake." How often do
 
 ### Creating a Document-Term Matrix (DTM)
 
-A DTM is a matrix in which the rows correspond to documents in a corpus (in our case, each wine description constitutes a document) and each column corresponds to terms, or words. This code to create a DTM for our wine dataset is based on [Ho (2018)](https://datawarrior.wordpress.com/2018/01/22/document-term-matrix-text-mining-in-r-and-python/).
+A DTM is a matrix in which the rows correspond to documents in a corpus (in our case, each wine description constitutes a document) and each column corresponds to terms, or words. This code to create a DTM for our wine dataset is based on [Ho (2018)](https://datawarrior.wordpress.com/2018/01/22/document-term-matrix-text-mining-in-r-and-python/). 
 
 ```{r}
 #Create DTM

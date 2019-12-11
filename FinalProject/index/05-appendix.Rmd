@@ -17,8 +17,28 @@ This first appendix includes all of the R chunks of code that were hidden throug
 ```
 
 **In Chapter \@ref(ref-labels):**
+```{r ref.label = 'include_packages_3', results = 'hide', echo = TRUE}
+```
+
+**In Chapter \@ref(ref-labels):**
 
 ```{r ref.label='include_packages_2', results='hide', echo = TRUE}
 ```
 
-# The Second Appendix, for Fun
+# The Second Appendix - Additional Code
+
+**Import data**
+```{r ref.label = importdata}
+```
+
+**Figures from Chapter 2**
+
+```{r ref.label = exploretext, results = 'hide', echo = TRUE}
+```
+
+```{r ref.label = figpoints, results = 'hide', echo = TRUE}
+```
+
+```{r figtfidf, fig.width = 7}
+```
+
