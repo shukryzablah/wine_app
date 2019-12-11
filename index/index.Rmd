@@ -1,0 +1,155 @@
+---
+title: 'Wines Around the World'
+author: 'YZ Analytics'
+date: 'December 11, 2019'
+institution: 'Amherst College'
+#advisor: 'Advisor F. Name'
+#altadvisor: 'Your Other Advisor'
+# Delete line 6 if you only have one advisor
+#department: 'Mathematics and Statistics'
+#degree: 'Bachelor of Arts'
+knit: "bookdown::render_book"
+site: bookdown::bookdown_site
+output: 
+  thesisdown::thesis_pdf: default
+  thesisdown::thesis_gitbook: default
+# If you are creating a PDF you'll need to write your preliminary content here or
+# use code similar to line 19 for the files.  If you are producing in a different
+# format than PDF, you can delete or ignore lines 19-30 in this YAML header.
+chapter 1: |
+ `r if(knitr:::is_latex_output()) paste(readLines("01-chap1.Rmd"), collapse = '\n  ')`
+chapter 2: |
+ `r if(knitr:::is_latex_output()) paste(readLines("02-chap2.Rmd"), collapse = '\n  ')`
+chapter 3: |
+ `r if(knitr:::is_latex_output()) paste(readLines("03-chap3.Rmd"), collapse = '\n  ')`
+chapter 4: |
+ `r if(knitr:::is_latex_output()) paste(readLines("04-conclusion.Rmd"), collapse = '\n  ')`
+chapter 5: |
+ `r if(knitr:::is_latex_output()) paste(readLines("05-appendix.Rmd"), collapse = '\n  ')`
+# If you'd rather include the preliminary content in files instead of inline
+# like below, use a command like that for the abstract above.  Note that a tab is 
+# needed on the line after the |.
+#acknowledgements: |
+#  I want to thank a few people.
+#dedication: |
+#  You can have a dedication here if you wish. 
+bibliography: bib/winebib.bib
+# Download your specific bibliography database file and refer to it in the line above.
+csl: csl/apa.csl
+# Download your specific csl file and refer to it in the line above.
+lot: true
+lof: true
+# space_between_paragraphs: true
+# Delete the # at the beginning of the previous line if you'd like
+# to have a blank new line between each paragraph
+#header-includes:
+#- \usepackage{tikz}
+---
+
+<!--
+Above is the YAML (YAML Ain't Markup Language) header that includes a lot of metadata used to produce the document.  Be careful with spacing in this header!
+
+If you'd prefer to not include a Dedication, for example, simply delete lines 26 and 27 above or add a # before them to comment them out.  If you have other LaTeX packages you would like to include, delete the # before header-includes and list the packages after hyphens on new lines.
+
+If you'd like to include a comment that won't be produced in your resulting file enclose it in a block like this.
+-->
+
+<!--
+If you receive a duplicate label error after knitting, make sure to delete the index.Rmd file and then knit again.
+-->
+
+```{r include_packages, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis.
+if(!require(devtools))
+  install.packages("devtools", repos = "http://cran.rstudio.com")
+if(!require(thesisdown))
+  devtools::install_github("Amherst-Statistics/thesisdown")
+library(thesisdown)
+```
+
+<!-- You'll need to include the order that you'd like Rmd files to appear in the _bookdown.yml file for
+PDF files and also delete the # before rmd_files: there.  
+-->
+
+<!-- The {.unnumbered} option here means that the introduction will be "Chapter 0." You can also use {-} for no numbers
+on chapters.
+-->
+
+# Introduction {.unnumbered}
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      echo=FALSE,
+                      warning=FALSE)
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(xtable)
+```
+
+The first traces of wine were found in Georgia in 6000BCE^[@watson2010]. In **Figure 1** we show a map of more than 10 thousand wineries operational today.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/wineries.png}
+\caption{Map of more than 10000 wineries present in our dataset.}
+\end{figure}
+
+For more than 8000 years, wine has been a relevant part of civilization, and yet, many people still do not think twice when they say "I'm not a wine person". Even then, there are many people that are also able to comfortably say: "This juicy, fruit-forward wine delectates the palate."
+
+This report and the accompanying [web application](https://szablah.shinyapps.io/wine/) aim for two things: 1) to showcase an advanced usage of visualization techniques in the context of a product for wine exploration, and 2) to expand and develop statistical techniques for a seamless incorporation into our product. Therefore, our main goal is to provide an immersive experience which leverages technology and builds upon the statistical/technical knowledge of a bachelor-level student, all within the context of wine. 
+
+## Data Provenance
+
+In this project we will be working with Kaggle's wine review data, found [here](https://www.kaggle.com/zynicide/wine-reviews)^[@thoutt2017]. There are close to 130,000 wine reviews from [Wine Magazine's website](https://www.winemag.com/?s=&drink_type=wine&page=0)^[@winemag]. A small glimpse of what the data looks like is available below for convenience: 
+
+```{r}
+read_csv("../data/winemag-data-130k-v2.csv") %>%
+    glimpse()
+```
+
+Next we proceed with a discussion of the variables that are available in our dataset. 
+
+### Variables:
+
+Our dataset contains almost 130K observations, one for each wine review, and 17 variables. 
+
+Below, a description of the seventeen variables is included: 
+
+* id - The unique obervation identifier for reviews in our dataset
+* country - The country that the wine is from
+* description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc
+* designation - The vineyard within the winery where the grapes that made the wine are from
+* points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
+* price - The cost for a bottle of the wine
+* province - The province or state that the wine is from
+* region_1 - The wine growing area in a province or state (ie Napa)
+* region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
+* variety - The type of grapes used to make the wine (ie Pinot Noir)
+* winery - The winery that made the wine
+* title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
+* taster_name - name of the taster
+* taster_twitter_handle - Twitter handle of the taster
+
+----- below to be created --- 
+
+* address - A combination of the winery and the country
+* latitude - to be geocoded latitude
+* longitude - to be geocoded longitude 
+
+### An Assessment of Data Quality
+
+Frequently undergraduate analyses are done with carefully curated data or fail to consider the quality of the datasets used until the conclusion. We decided to assess the quality of our data through research of wine production as this was decisive in creating our product.
+
+In **Figure 2** we show a map of the most relevant wine producing regions in the world. It is clearly evident that our dataset does not represent the global production of wine because the presence of observations originating from either Russia and China is lacking. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/winerieswikipedia.jpg}
+\caption{Map from Wikipedia with most relevant wine regions. Note the difference between the figure generated from our dataset (Figure 1) and this map.}
+\end{figure}
+
+Apart from the representativeness of our dataset, we consider the amount of information present, or the usefulness of our data. Most of the information we have is categorical, so we will have to generate some quantitative information to open up the number of possible analyzes or visualizations that are possible with our data.

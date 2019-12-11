@@ -1,0 +1,985 @@
+---
+title: 'Wines Around the World'
+author: 'YZ Analytics'
+date: 'December 11, 2019'
+institution: 'Amherst College'
+#advisor: 'Advisor F. Name'
+#altadvisor: 'Your Other Advisor'
+# Delete line 6 if you only have one advisor
+#department: 'Mathematics and Statistics'
+#degree: 'Bachelor of Arts'
+knit: "bookdown::render_book"
+site: bookdown::bookdown_site
+output: 
+  thesisdown::thesis_pdf: default
+  thesisdown::thesis_gitbook: default
+# If you are creating a PDF you'll need to write your preliminary content here or
+# use code similar to line 19 for the files.  If you are producing in a different
+# format than PDF, you can delete or ignore lines 19-30 in this YAML header.
+chapter 1: |
+ `r if(knitr:::is_latex_output()) paste(readLines("01-chap1.Rmd"), collapse = '\n  ')`
+chapter 2: |
+ `r if(knitr:::is_latex_output()) paste(readLines("02-chap2.Rmd"), collapse = '\n  ')`
+chapter 3: |
+ `r if(knitr:::is_latex_output()) paste(readLines("03-chap3.Rmd"), collapse = '\n  ')`
+chapter 4: |
+ `r if(knitr:::is_latex_output()) paste(readLines("04-conclusion.Rmd"), collapse = '\n  ')`
+chapter 5: |
+ `r if(knitr:::is_latex_output()) paste(readLines("05-appendix.Rmd"), collapse = '\n  ')`
+# If you'd rather include the preliminary content in files instead of inline
+# like below, use a command like that for the abstract above.  Note that a tab is 
+# needed on the line after the |.
+#acknowledgements: |
+#  I want to thank a few people.
+#dedication: |
+#  You can have a dedication here if you wish. 
+bibliography: bib/winebib.bib
+# Download your specific bibliography database file and refer to it in the line above.
+csl: csl/apa.csl
+# Download your specific csl file and refer to it in the line above.
+lot: true
+lof: true
+# space_between_paragraphs: true
+# Delete the # at the beginning of the previous line if you'd like
+# to have a blank new line between each paragraph
+#header-includes:
+#- \usepackage{tikz}
+---
+
+<!--
+Above is the YAML (YAML Ain't Markup Language) header that includes a lot of metadata used to produce the document.  Be careful with spacing in this header!
+
+If you'd prefer to not include a Dedication, for example, simply delete lines 26 and 27 above or add a # before them to comment them out.  If you have other LaTeX packages you would like to include, delete the # before header-includes and list the packages after hyphens on new lines.
+
+If you'd like to include a comment that won't be produced in your resulting file enclose it in a block like this.
+-->
+
+<!--
+If you receive a duplicate label error after knitting, make sure to delete the index.Rmd file and then knit again.
+-->
+
+```{r include_packages, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis.
+if(!require(devtools))
+  install.packages("devtools", repos = "http://cran.rstudio.com")
+if(!require(thesisdown))
+  devtools::install_github("Amherst-Statistics/thesisdown")
+library(thesisdown)
+```
+
+<!-- You'll need to include the order that you'd like Rmd files to appear in the _bookdown.yml file for
+PDF files and also delete the # before rmd_files: there.  
+-->
+
+<!-- The {.unnumbered} option here means that the introduction will be "Chapter 0." You can also use {-} for no numbers
+on chapters.
+-->
+
+# Introduction {.unnumbered}
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(message=FALSE,
+                      echo=FALSE,
+                      warning=FALSE)
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(xtable)
+```
+
+The first traces of wine were found in Georgia in 6000BCE^[@watson2010]. In **Figure 1** we show a map of more than 10 thousand wineries operational today.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/wineries.png}
+\caption{Map of more than 10000 wineries present in our dataset.}
+\end{figure}
+
+For more than 8000 years, wine has been a relevant part of civilization, and yet, many people still do not think twice when they say "I'm not a wine person". Even then, there are many people that are also able to comfortably say: "This juicy, fruit-forward wine delectates the palate."
+
+This report and the accompanying [web application](https://szablah.shinyapps.io/wine/) aim for two things: 1) to showcase an advanced usage of visualization techniques in the context of a product for wine exploration, and 2) to expand and develop statistical techniques for a seamless incorporation into our product. Therefore, our main goal is to provide an immersive experience which leverages technology and builds upon the statistical/technical knowledge of a bachelor-level student, all within the context of wine. 
+
+## Data Provenance
+
+In this project we will be working with Kaggle's wine review data, found [here](https://www.kaggle.com/zynicide/wine-reviews)^[@thoutt2017]. There are close to 130,000 wine reviews from [Wine Magazine's website](https://www.winemag.com/?s=&drink_type=wine&page=0)^[@winemag]. A small glimpse of what the data looks like is available below for convenience: 
+
+```{r}
+read_csv("../data/winemag-data-130k-v2.csv") %>%
+    glimpse()
+```
+
+Next we proceed with a discussion of the variables that are available in our dataset. 
+
+### Variables:
+
+Our dataset contains almost 130K observations, one for each wine review, and 17 variables. 
+
+Below, a description of the seventeen variables is included: 
+
+* id - The unique obervation identifier for reviews in our dataset
+* country - The country that the wine is from
+* description - A few sentences from a sommelier describing the wine's taste, smell, look, feel, etc
+* designation - The vineyard within the winery where the grapes that made the wine are from
+* points - The number of points WineEnthusiast rated the wine on a scale of 1-100 (though they say they only post reviews for wines that score >=80)
+* price - The cost for a bottle of the wine
+* province - The province or state that the wine is from
+* region_1 - The wine growing area in a province or state (ie Napa)
+* region_2 - Sometimes there are more specific regions specified within a wine growing area (i.e. Rutherford inside the Napa Valley), but this value can sometimes be blank
+* variety - The type of grapes used to make the wine (ie Pinot Noir)
+* winery - The winery that made the wine
+* title - The title of the wine review, which often contains the vintage if you're interested in extracting that feature
+* taster_name - name of the taster
+* taster_twitter_handle - Twitter handle of the taster
+
+----- below to be created --- 
+
+* address - A combination of the winery and the country
+* latitude - to be geocoded latitude
+* longitude - to be geocoded longitude 
+
+### An Assessment of Data Quality
+
+Frequently undergraduate analyses are done with carefully curated data or fail to consider the quality of the datasets used until the conclusion. We decided to assess the quality of our data through research of wine production as this was decisive in creating our product.
+
+In **Figure 2** we show a map of the most relevant wine producing regions in the world. It is clearly evident that our dataset does not represent the global production of wine because the presence of observations originating from either Russia and China is lacking. 
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\columnwidth]{../assets/winerieswikipedia.jpg}
+\caption{Map from Wikipedia with most relevant wine regions. Note the difference between the figure generated from our dataset (Figure 1) and this map.}
+\end{figure}
+
+Apart from the representativeness of our dataset, we consider the amount of information present, or the usefulness of our data. Most of the information we have is categorical, so we will have to generate some quantitative information to open up the number of possible analyzes or visualizations that are possible with our data.
+
+<!--chapter:end:index.Rmd-->
+
+<!--
+This is for including Chapter 1.  Notice that it's also good practice to name your chunk.  This will help you debug potential issues as you knit.  The chunk above is called intro and the one below is called chapter1.  Feel free to change the name of the Rmd file as you wish, but don't forget to change it here from chap1.Rmd.
+-->
+
+<!--
+The {#rmd-basics} text after the chapter declaration will allow us to link throughout the document back to the beginning of Chapter 1.  These labels will automatically be generated (if not specified) by changing the spaces to hyphens and capital letters to lowercase.  Look for the reference to this label at the beginning of Chapter 2.
+-->
+
+# Exploratory Data Analysis {#rmd-basics}
+
+
+```{r packages, echo = TRUE}
+library(tidyverse)
+library(GGally)
+```
+
+## Countries 
+
+It will be important to understand the countries that are represented in our dataset in order to be able to know what types of mapping capabilities we have to have to create a good experience. 
+
+```{r importdata, echo = TRUE}
+path <- "../data/winemag-data-130k-v2.csv"
+Wine <- read_csv(path,
+                 col_types = cols(
+                     X1 = col_double(),
+                     country = col_character(),
+                     description = col_character(),
+                     designation = col_character(),
+                     points = col_double(),
+                     price = col_double(),
+                     province = col_character(),
+                     region_1 = col_character(),
+                     region_2 = col_character(),
+                     taster_name = col_character(),
+                     taster_twitter_handle = col_character(),
+                     title = col_character(),
+                     variety = col_character(),
+                     winery = col_character()),
+                 progress = FALSE
+                 ) %>%
+    rename(id = X1)
+```
+
+```{r countries1, echo = TRUE}
+top_countries_tbl <- Wine %>%
+    mutate(country = fct_explicit_na(country)) %>%
+    mutate(country = fct_lump(country, 12)) %>%
+    count(country, sort = TRUE) %>%
+    mutate(prop = n / sum(n))
+
+top_countries_tbl
+```
+
+The top 13 categories, including the lumped-together category of "Other" consist of those categories which have a count consisting of more than 1% of the observations in the dataset. 
+
+```{r countries2}
+top_countries_tbl %>%
+    mutate(prop_cumulative = cumsum(prop)) %>%
+    ggplot(aes(x = seq_along(country), y = prop_cumulative)) +
+    geom_point() +
+    geom_label(aes(label = country)) +
+    scale_y_continuous(limits = c(0, 1)) +
+    scale_x_continuous(breaks = seq(0, 13)) +
+    labs(x = "# Top Countries" , y = "Cumulative Proportion")
+```
+
+Note that most of the observations, in fact, more than 90% of the observations are contained in the 8 most represented countries and 80% on the top 4, and 60% on the top 2 (USA and France). 
+
+It looks like it will be possible to create an interactive map. Now we need to geolocate the wineries. Worst case scenario we have the countries and their representation in the dataset. 
+
+Another interesting fact is that since 40% of the observations come from the USA, then perhaps it will be possible to get historical information to add quantitative predictors to our dataset, but it is not crucial since our focus is in the presentation of the data. 
+
+## Wineries
+
+Is there a similar concentration for the wineries? Turns out no. Lumping won't work because there are just so many wineries and there aren't any ones that particularly dominate. 
+
+```{r wineries1, echo = TRUE}
+top_wineries_tbl <- Wine %>%
+    count(winery, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+mean_prop <- mean(top_wineries_tbl$prop)
+mean_prop
+
+top_wineries_tbl %>%
+    ggplot(aes(x = prop)) +
+    geom_histogram(bins = 30) +
+    geom_vline(xintercept = mean_prop, color = "red")
+```
+
+The table below summarizes the information for the proportions of each winery.
+
+```{r wineries2, echo = TRUE}
+summary(top_wineries_tbl)
+```
+
+From the summary we note that half of the wineries contain more than 90% of the observations, and 25% of the wineries contain more than 70% of the observations. However there are 16757 wineries which means that 25% of the observations is around 4000 wineries. 
+
+If we need to geolocate the wineries and we run into trouble, then perhaps only doing half will suffice for our visualization.
+
+## Variety
+
+Variety of a wine refers to the type of grape that is used - for example, among white grape wines, there are varieties such as Sauvignon Blanc, Chardonnay, and Riesling. Among red grape wines, some varieties include Merlot, Cabernet Sauvignon, and Pinot Noir.
+
+```{r varieties1, echo = TRUE}
+top_varieties_tbl <- Wine %>%
+    count(variety, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_varieties_tbl)
+
+top_varieties_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+We can see from the summary that with among wine variety, 25% of the varieties include more than 97% of of the wines and half of the varieties account for more than 99% of the observed wines. Additionally, Pinot Noir accounts for more than 10% of the wines, followed by Chardonnay with 9.0%, Cabernet Sauvignon with 7.3%, and Red Blend with 6.9%.
+
+## Designation
+
+Designation is a tricky variable to work with. It refers to a label placed on the wine by the winemaker in regulation with rules of the country, although not every country has the same rules. For example, the designation of "Reserve" wine generally means the wine has been set aside to age for a longer time than other wines generally would, and it often implies a higher quality. While "Reserva" refers to reserve wines in Spain, and "Riserva" to those in Italy, the two countries have different rules about how long the wine must be aged for in order to receive their respective designations. Other countries, like the U.S., don't have any rules in general. Given this general lack of universality of designation, this variable likely will not mean much in our project, but we can still look at its characteristics.
+
+```{r designation, echo = TRUE}
+top_designation_tbl <- Wine %>%
+    count(designation, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_designation_tbl)
+
+top_designation_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+While 28.8% of the wines do not have a designation, 25% of the designations contain more than 73% of the wines. We see that of the most common 5 designations, three of them are related to reserve wines but in different languages, while the other two refer to estate wines - wines in which the grapes are grown and the wine is made in the same location.
+
+## Taster
+
+The tasters are Wine Enthusiast Magazine wine reviewers.
+
+```{r taster, echo = TRUE}
+top_taster_tbl <- Wine %>%
+    mutate(taster_name = fct_explicit_na(taster_name)) %>%
+    mutate(taster_name = fct_lump(taster_name, 15)) %>%
+    count(taster_name, sort = TRUE) %>%
+    mutate(prop = n / sum(n))
+
+top_taster_tbl
+```
+
+While 20% of the wines do not have tasters listed, 19.6% of the wines were tasted by Roger Voss, followed by 11.6% which were tasted by Michael Schachner. A potentially interesting side project could be to try and differentiate the wine descriptions between tasters, or to search for patterns in each taster's preferred wines.
+
+We can speculate if any of the tasters are biased for more positive or negative reviews by looking at mean points per taster:
+
+```{r taster2, echo = TRUE}
+Wine %>%
+  group_by(taster_name) %>%
+  summarize(meanpoints = mean(points)) %>%
+  arrange(desc(meanpoints))
+```
+
+The mean points per taster range between 85.9 and 90.6. Although there are likely many factors underlying these differences in points between reviewers, if I were a wine maker, I would want Anne Krebiehl MW or Matt Kettmann reviewing my wine, not Alexander Peartree.
+
+## Points
+
+Points is the variable we will be trying to predict.
+
+```{r points, echo = TRUE}
+points_tbl <- Wine %>%
+    count(points, sort = TRUE) %>%
+    mutate(prop = n / sum(n))
+
+summary(points_tbl)
+
+points_tbl %>%
+  ggplot(aes(x = points, y = prop)) +
+  geom_bar(stat = "identity")
+```
+
+The points look fairly normally distributed - there might be a slight right skew due to very few wines being rated over 95 points. The points range from 80-100 with both mean and median of 90 points.
+
+## Price 
+
+```{r price, echo = TRUE}
+price_tbl <- Wine %>%
+    count(price, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(price_tbl)
+```
+
+We can see from the table that the price for wine ranges between 4 and 3,300 USD. More than 98% of the wines are under 101.20 USD, and more than 99.7% of the wines are less than 203.5 USD.
+
+## Description
+
+Here is an example of the description. 
+
+```{r, results = "asis", echo = TRUE}
+Wine %>% pull(description) %>% pluck(1)
+```
+
+This is one example. We will want to extract features from the description in order to incorporate this information into any model we do. 
+
+## Province and Regions
+
+Province and regions are related to country for self-explanatory reasons. Region is a smaller area of a province. Let's just explore province.
+
+```{r province, echo = TRUE}
+top_province_tbl <- Wine %>%
+    count(province, sort = TRUE) %>%
+    mutate(prop = n / sum(n)) %>%
+    mutate(prop_cumulative = cumsum(prop)) 
+
+summary(top_province_tbl)
+
+top_province_tbl %>%
+  arrange(desc(prop)) %>%
+  head()
+```
+
+Unsurprisingly, provinces in the U.S., France, and Italy dominate the top provinces list. A whopping 28% of our wines come from California alone.
+
+<!--chapter:end:01-chap1.Rmd-->
+
+# Text Analysis and Prediction {#math-sci}
+
+<!-- Required to number equations in HTML files -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+
+```{r include_packages_3, include=FALSE}
+library(tidyverse)
+library(tm)
+library(text2vec)
+library(tidytext)
+library(textmineR)
+library(SnowballC)
+library(caret)
+library(gbm)
+```
+
+## Extracting Features from Text
+
+A key part of this project is learning how to extract features from text. In the case of our data with wine reviews, the largest body of text we have is from the description variable. First we'll load in our data.
+
+```{r}
+Wine <- read_csv("../data/winemag-data-130k-v2.csv",
+                 col_types = cols(
+                     X1 = col_double(),
+                     country = col_character(),
+                     description = col_character(),
+                     designation = col_character(),
+                     points = col_double(),
+                     price = col_double(),
+                     province = col_character(),
+                     region_1 = col_character(),
+                     region_2 = col_character(),
+                     taster_name = col_character(),
+                     taster_twitter_handle = col_character(),
+                     title = col_character(),
+                     variety = col_character(),
+                     winery = col_character()),
+                 progress = FALSE
+                 ) %>%
+    rename(id = X1)
+```
+
+First, we can look at some exploratory plots. For example, following [code from Kaggle user nnnnick (2018)](https://www.kaggle.com/nnnnick/predicting-wine-ratings-using-lightgbm-text2vec)^[@kagglepredict], we can look at the words in the wine description with the highest and lowest mean scores:
+
+```{r exploretext}
+wine_explore <- Wine %>% 
+    select(description, points) %>%
+    mutate(description = gsub('[[:punct:] ]+',' ',tolower(description)))
+
+words <- str_split(wine_explore$description, ' ')
+all_words <- data.frame(points = rep(wine_explore$points, 
+                                     sapply(words, length)), 
+                        words = unlist(words))
+```
+
+```{r figpoints, fig.width = 7, fig.height = 4}
+words_grouped <- all_words %>%
+    group_by(words) %>%
+    summarize(
+        points = mean(points),
+        count = n()
+    ) %>%
+    filter(count > 10) %>%
+    arrange(desc(points))
+
+top <- words_grouped[1:10,] %>% cbind(top_bottom = 'top')
+bottom <- words_grouped[(nrow(words_grouped) - 9):nrow(words_grouped),] %>% 
+  cbind(top_bottom = 'bottom')
+top_bottom <- rbind(top, bottom)
+
+ggplot(top_bottom, aes(x = reorder(words, points), y = points, fill = top_bottom)) +
+    geom_bar(stat = 'identity') +
+    coord_flip() + 
+    scale_fill_manual(values = c('#fed86f', '#97040b')) + 
+    ggtitle("Wine Review Words with the Highest and Lowest Mean Points") +
+    xlab("Word") +
+    ylab("Average Points") + 
+    labs(fill = "Top or Bottom")
+```
+
+For the words with the top mean points, we can see several words that are actually years in the future - for example, 2043 and 2040. This is because many wine reviews of good wines will included something like "This wine will age well to 2040" or something of the sort. Some words in the top 10 with the highest mean point values may not be familiar to most people. "Cayuse," for example, is the name of vineyards in Washington state that are famous for tasty wines. Simialrly, "Gaja" is the name of a famous Italian producer of wine.
+
+Looking at the words with the lowest mean points, nobody wants to drink a wine that's described as "gluey" or "fake." How often do these words show up though, and how can we use them in a predictive model? To find out, we need to create a document-term matrix, which shows the the frequency of terms that occur in a collection of documents.
+
+### Creating a Document-Term Matrix (DTM)
+
+A DTM is a matrix in which the rows correspond to documents in a corpus (in our case, each wine description constitutes a document) and each column corresponds to terms, or words. This code to create a DTM for our wine dataset is based on [this blog post](https://datawarrior.wordpress.com/2018/01/22/document-term-matrix-text-mining-in-r-and-python/)^[@ho2018]. 
+
+```{r createdtm, echo = TRUE}
+#Create DTM
+dtm <- CreateDtm(Wine$description,
+                doc_names = Wine$id,
+                ngram_window = c(1, 1),
+                lower = TRUE,
+                remove_punctuation = TRUE,
+                remove_numbers = TRUE,
+                stem_lemma_function = wordStem)
+```
+
+The resulting DTM is huge - about 43 megabytes with close to 3 billion elements. We need to create some functions that will allow us to use the DTM:
+
+```{r createdtmfunctions, echo = TRUE}
+#Create functions
+get.token.occurrences<- function(dtm, token)
+  dtm[, token] %>% as.data.frame() %>% rename(count=".") %>%
+  mutate(token=row.names(.)) %>% arrange(-count)
+ 
+get.total.freq<- function(dtm, token) dtm[, token] %>% sum
+ 
+get.doc.freq<- function(dtm, token)
+  dtm[, token] %>% as.data.frame() %>% rename(count=".") %>%
+  filter(count>0) %>% pull(count) %>% length
+```
+
+Now we can see how many wines are actually described as "fake":
+
+```{r usedtmfunctions, echo = TRUE}
+dtm %>% get.doc.freq(wordStem("fake"))
+```
+
+Which 13 wines?
+
+```{r usedtmfunctions2, echo = TRUE}
+fakewines <- dtm %>% get.token.occurrences(wordStem("fake")) %>% head(13)
+Wine$title[c(as.numeric(fakewines$token))]
+```
+
+Let's look at the description of the fourth wine:
+
+```{r, results = "asis"}
+#27585 is the token number for the fourth wine
+winedescription <- Wine$description[27585]
+winedescription
+```
+
+Yikes. This seems like a bad wine.
+
+From our document-term matrix, we could create a list of the top words by frequency and use those in our predictive model. However, if we were basing our top words by term frequency, we would be including words that are used so often that they probably don't have much meaning. Therefore, a better way to rank our words would be term frequency-inverse document frequency, which will be explained in the next section.
+
+### Term Frequency-Inverse Document Frequency
+
+Term Frequency-Inverse Document Frequency (TF-IDF) is a statistic that evaluates how important a word is in a document or corpus. It is calculated through dividing the term frequency of how often a word appears in a document by its inverse document frequency, which is the inverse of the proportion of how many documents in a corpus have a certain term.  Therefore, high frequency terms but with little importance such as "the" or "and" will have low TF-IDF values, and so TF-IDF can be used as a weighting measure in ranking.
+
+TF-IDF will be useful in our prediction model becuase we can include the words with the higest mean TF-IDF values in our model. Let's see what these words with the highest mean TF-IDF values are. The following code has been modified from the one of the [cran.R vignettes of the `textmineR` package](https://cran.r-project.org/web/packages/textmineR/vignettes/a_start_here.html)^[@jones2019].
+
+```{r calculatetfidf, echo = TRUE}
+tf_mat <- TermDocFreq(dtm = dtm)
+head(tf_mat[ order(tf_mat$term_freq, decreasing = TRUE) , ], 10)
+tfidf_mat <- t(dtm[ , tf_mat$term ]) * tf_mat$idf #calculating TF-IDF
+tfidf <- t(tfidf_mat)
+tfidf_means <- colMeans(tfidf) #calculating mean values
+tfidf_means <- as.data.frame(tfidf_means)
+tfidf_means$word <- rownames(tfidf_means)
+#top 200 with highest mean TF-IDF values
+top200 <- tfidf_means %>% arrange(desc(tfidf_means)) %>% top_n(200, tfidf_means)
+```
+
+
+```{r figtfidf, fig.width = 7}
+# Plot the words with highest mean TF-IDF values
+tfidf_means %>%
+  arrange(desc(tfidf_means)) %>%
+  top_n(15, tfidf_means) %>%
+  ggplot(aes(reorder(word, tfidf_means), tfidf_means)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Wine Review Words with Highest Mean TF-IDF Value") +
+  xlab("word") +
+  ylab("mean TF-IDF value") +
+  coord_flip()
+```
+
+"Wine" and "fruit" have especially high mean TF-IDF values, followed by "black," "flavor," "acid," and "aroma."
+
+Now let's see how we can use the DTM in a data frame for prediction.
+
+```{r matchdataframe, echo = TRUE}
+# Match dtm column names to the words with top 200 mean tf-idf values
+dtm_small <- dtm[, colnames(dtm) %in% top200$word]
+ncol(dtm_small)
+```
+
+We're left with a document-term matrix with the 200 words with the highest mean tf-idf value.
+
+## Prediction
+
+Let's look at predicting wines. We are looking to build a model that can be implemented for an average user of our web app to input values and text and receive an output of points.
+
+Because we have a lot of missing data and a mixture of numerical and categorical data, methods like random forest are difficult to implement. Let's try gradient boosting, which in R can include categorical variables of up to 1024 categories (unlike randomForest, which only allows up to 53 categories per categorical variable).
+
+First, we need to clean our data. We will remove variables that either 1) are factor variables with more than 1024 categories, or 2) are variables that are not necessarily relevant to an average person looking to explore wine. An example of variables in the latter category are `taster_name` and `taster_twitter_handle`.
+
+```{r cleandata, echo = TRUE}
+dtm_df <- as.data.frame(as.matrix(dtm_small))
+dtm_df$id <- c(0:129970)
+Wine_dtm <- left_join(Wine, dtm_df, by = "id")
+Wine_dtm <- Wine_dtm %>%
+  select(-id, -description, -designation, -region_1, -region_2, -taster_name,
+         -taster_twitter_handle, -title, -winery) %>%
+  mutate(country = as.factor(country),
+         province = as.factor(province),
+         variety = as.factor(variety))
+```
+
+Now we will split our data into training and test sets.
+
+```{r testtrainsplit1, echo = TRUE}
+# Test/Train split
+set.seed(1)
+smp_size <- floor(0.8 * nrow(Wine_dtm))
+train_ind <- sample(seq_len(nrow(Wine_dtm)), size = smp_size)
+train <- Wine_dtm[train_ind, ]
+test <- Wine_dtm[-train_ind, ]
+```
+
+Now we can apply a gradient boosting algorithm to create our prediction model. First, let's try a boosting model with 5 trees. This is not a lot of trees, so we'd expect that the model wouldn't do so well with prediction on our test set.
+
+```{r model1, echo = TRUE}
+set.seed(1)
+boost_wine5 <- gbm(points ~ ., 
+                   data = train, 
+                   distribution = "gaussian", 
+                   n.trees = 5,
+                   interaction.depth = 4)
+
+boost_estimate5 <- predict(boost_wine5, # predict on test set 
+                         newdata = test,
+                         n.trees = 5,
+                         na.action = NULL)
+mse_boost5 <- mean((boost_estimate5 - test$points)^2)
+sqrt_mse5 <- sqrt(mse_boost5); sqrt_mse5 # calculate MSE
+```
+
+With this model, the prediction is off by an average of `r sqrt_mse5` points. That's not great. Let's compare this square root of the MSE to that of a model where we use 500 trees.
+
+```{r model2, eval = FALSE, echo = TRUE}
+set.seed(1)
+boost_wine <- gbm(points ~ ., 
+                   data = train, 
+                   distribution = "gaussian", 
+                   n.trees = 500,
+                   interaction.depth = 4)
+
+# Save model to .rds file
+saveRDS(boost_wine, "boost_wine500.rds")
+```
+
+Running the above chunk takes too long, so we've loaded the model in the chunk below. We can check to see how well this model with 500 trees does with prediction on the test set:
+
+```{r modelpred1, echo = TRUE}
+# load model
+boost_wine <- readr::read_rds("./data/boost_wine500.rds")
+boost_estimate <- predict(boost_wine, 
+                         newdata = test, 
+                         n.trees = 500,
+                         na.action = NULL)
+mse_boost <- mean((boost_estimate - test$points)^2)
+sqrt_mse <- sqrt(mse_boost); sqrt_mse
+```
+
+The square root of the mean squared error is `r sqrt_mse` - much smaller than that of the model with only 5 trees. Let's look at the most important features in this more accurate model.
+
+```{r, echo = TRUE}
+top_n(summary(boost_wine), 10, rel.inf)
+```
+
+Unsurprisingly, the variable with the most relative influence is price, followed by variety, then province. Stemmed words that are the most important are "rich", "complex," "simpl."
+
+Let's see how this model predicts the points of a wine that is not in the data set.
+
+For example, we can predict the points of a Portuguese Red Touriga Nacional wine that is $35 from Dão with the description: "This is a solidly structured wine that has big tannins in place. That will change as the wine ages further, bringing the rich black fruits forward and reveling in the perfumed acidity of the wine. Drink from 2021."
+
+Below, we have created a function called `estimatepoints` that uses inputs of country, price, description, province, and variety and returns a points estimate based on our model.
+
+```{r estimatepoints, echo = TRUE}
+estimatepoints <- function(country, price, description, province, variety) {
+  newwine <- data.frame(id = 1, country, price, description, province, 
+                        variety) %>%
+    mutate(description = as.character(description))
+  
+  # Create DTM for new wine
+  dtm_newwine <- CreateDtm(newwine$description,
+                doc_names = newwine$id,
+                ngram_window = c(1, 1),
+                lower = TRUE,
+                remove_punctuation = TRUE,
+                remove_numbers = TRUE,
+                stem_lemma_function = wordStem)
+  # words in top 200
+  dtm_newwine2 <- dtm_newwine[, colnames(dtm_newwine) %in% top200$word]
+  dtm_newwine_df <- as.data.frame(as.matrix(t(dtm_newwine2)))
+  # find the top 200 words not in new wine but in dtm
+    otherwords <- top200 %>%
+    filter(!word %in% dtm_newwine_df)
+  # fill the words not in new wine to df with 0
+  dtm_newwine_df[otherwords$word] <- 0
+
+  newwine <- cbind(newwine, dtm_newwine_df) # fill in rest of data
+  
+  # Estimate points of new wine
+  test_estimate <- predict(boost_wine, 
+                         newdata = newwine,
+                         n.trees = 100,
+                         na.action = NULL)
+
+  return(test_estimate)
+}
+
+# Save function & top200 data frame for use in Shiny app
+save(top200, estimatepoints, file="estimatepoints_function.Rda")
+```
+
+So now to predict the number of points our Portuguese wine would receive, we can just plug in the input values.
+
+```{r usefn, echo = TRUE}
+estimatepoints(country = "Portugal",
+               price = 35,
+               description = "This is a solidly structured wine that 
+               has big tannins in place. That will change as the wine 
+               ages further, bringing the rich black fruits forward 
+               and reveling in the perfumed acidity of the wine.
+               Drink from 2021.",
+               province = "Dão",
+               variety = "Touriga Nacional, Portuguese Red")
+```
+
+Our model predicts this wine would receive about 89 points. Not bad.
+
+**Model with just description**
+
+The model we are using to predict points uses variables like price, province, and variety, which all have much higher relative influence compared to just the words in the description. What if we removed these variables with higher relative influence and looked just at how well words in the description can predict points?
+
+We will select just the points variable and the word variables and set up a training and test set to create the same gradient boosting model with just the word variables.
+
+```{r newmodel, echo = TRUE}
+# leaves just the DTM of words
+Wine_justwords <- Wine_dtm %>%
+  select(-country, -price, -province, -variety) 
+
+# Train/Test split
+set.seed(1)
+smp_size2 <- floor(0.8 * nrow(Wine_justwords))
+train_ind2 <- sample(seq_len(nrow(Wine_justwords)), size = smp_size2)
+train2 <- Wine_justwords[train_ind2, ]
+test2 <- Wine_justwords[-train_ind2, ]
+```
+
+Now we can fit the model. Again, this algorithm takes a while to run, so the code to create the model is shown in the first code chunk below, but we will just load the model object into the next code chunk for analysis.
+
+```{r model3, eval = FALSE, echo = TRUE}
+set.seed(1)
+boost_wine_words <- gbm(points ~ ., 
+                   data = train2, 
+                   distribution = "gaussian", 
+                   n.trees = 500,
+                   interaction.depth = 4)
+
+# Save model to .rds file
+saveRDS(boost_wine_words, "boost_wine_words.rds")
+```
+
+```{r model3pred, echo = TRUE}
+# load model
+boost_wine_words <- readr::read_rds("./data/boost_wine_words.rds")
+boost_estimate_words <- predict(boost_wine_words, 
+                         newdata = test2, 
+                         n.trees = 500,
+                         na.action = NULL)
+mse_boost_words <- mean((boost_estimate_words - test2$points)^2)
+sqrt_mse_words <- sqrt(mse_boost_words); sqrt_mse_words
+```
+
+The model with just words performs a little worse than our model with price, variety, and province included with a mean prediction error of `r sqrt_mse_words` points. We can look at which words have the most relative influence in this model:
+
+```{r, echo = TRUE}
+top_n(summary(boost_wine_words), 10, rel.inf)
+```
+
+The word "rich" has the highest relative influence, followed by words like "vineyard," "complex," the stemmed "simpl," and the stemmed "concentr."
+
+However, because the model with price, province, and variety included has a lower MSE, and because these variables would not be difficult to find for an average wine drinker, we will use the model with 500 trees with price, province, and variety included to build our prediction engine.
+
+<!--chapter:end:02-chap2.Rmd-->
+
+# Geocoding and Visualization
+
+```{r include_packages_2, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis and also two functions
+# used for labeling and referencing
+if(!require(devtools))
+  install.packages("devtools", repos = "http://cran.rstudio.com")
+if(!require(dplyr))
+    install.packages("dplyr", repos = "http://cran.rstudio.com")
+if(!require(ggplot2))
+    install.packages("ggplot2", repos = "http://cran.rstudio.com")
+if(!require(ggplot2))
+    install.packages("bookdown", repos = "http://cran.rstudio.com")
+if(!require(thesisdown)){
+  library(devtools)
+  devtools::install_github("Amherst-Statistics/thesisdown")
+  }
+library(thesisdown)
+library(ggmap)
+library(dplyr)
+library(readr)
+library(purrr)
+```
+
+## Why Geocode? 
+
+Geocoding locations is generally a good idea because it allows for spatial analysis and spatial visualizations. In our case, geocoding the wine reviews will allow us to create interactive maps that visualize the wineries and allows users to explore our dataset. 
+
+## Using `ggmap`
+
+The most convenient approach to perform geocoding in R is to use the `ggmap` package. However, the rather recent change in Google's API requires setting up a project and generating a key in the Google Cloud Project. While we are billed for every observation that we geocode, we have credits available each month. To find out more about the API usage and billing refer to [the official website.](https://developers.google.com/maps/documentation/geocoding/usage-and-billing) To learn more about the `ggmap` package check out the [project's Github repository.](https://github.com/dkahle/ggmap) 
+
+### Reading in the Data
+
+
+```{r directory, echo = TRUE}
+data_dir <- "../data"
+file_name <- "winemag-data-130k-v2.csv"
+
+path <- file.path(data_dir, file_name)
+```
+
+```{r, message=FALSE, warning=FALSE, echo = TRUE}
+Wine <- read_csv(path) %>% 
+    rename(id = X1) %>% 
+    mutate(id = id + 1) 
+```
+
+The `mutate_geocoded` function from `ggmap` would be great if it actually had some error handling. However, it is not robust enough for our needs. Instead, we will create our own function to handle both network and API errors, while ensuring completion of our code.
+
+We will operate in a small sample of observations. This will allow us to test our function and then apply it to the whole dataset.
+
+```{r subset, echo = TRUE, eval = FALSE}
+set.seed(2019)
+
+subset <- Wine %>%
+    count(winery, country) %>%
+    mutate(address = paste0(winery, " ", country)) %>%
+    sample_n(20) 
+```
+
+### Setting Up Helper Function
+
+We mentioned that the function we use to geocode our observations has to be robust. We take advantage of the `purrr` adverbs to handle internal messages that slow down the operation of the geocoding function in `ggmap`. Additionally, we prevent network failures from being an issue by allowing failed requests to retry at most once after a short delay. Finally, in order to be able to ensure the completion of our code without errors, we wrap the geocoding functionality with an alternative for when the function fails. 
+
+You can see all these components working together in the function below.
+
+```{r geocodefn, echo = TRUE}
+geocode_robustly <-
+    possibly(
+        insistently(
+            quietly(geocode),
+            rate = rate_delay(0.1, max_times = 2)),
+        otherwise = list(result = tibble(lon = NA_real_, lat = NA_real_))
+    )
+```
+
+It is important to make sure that the `otherwise` argument matches the type of output given by the function that is wrapped by the `possibly` adverb.
+
+Finally, we apply our function to the addresses of the observations. 
+
+```{r locationsubset, echo = TRUE, eval = FALSE}
+locations <- subset %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+subset %>% bind_cols(locations)
+```
+
+Note that there will be some `NA` values in our location variables because we are largely relying on the integrity of the dataset and the Google Maps search engine.
+
+Confirming that our function is operating as desired, we can now we geocode all the units in our dataset. 
+
+### Putting It All Together
+
+In the code below we perform a further optimization by only geocoding the set of wineries. This allows us to avoid performing slow network requests on observations that have already been geocoded. The following represents every step taken to geocode our dataset with more than 100K observations. (The code will take some time to run.)
+
+```{r geocode, eval=FALSE, echo = TRUE}
+# 1. Add address column to geocode
+Wine <- Wine %>%
+    mutate(address = paste0(winery, " ", country))
+
+# 2. Get unique addresses
+Addresses <- Wine %>%
+    count(address) %>%
+    select(-n)
+
+# 3. Geocode unique addresses
+Locations <- Addresses %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+# 4. Bind location info to addresses
+Addresses <- Addresses %>%
+    bind_cols(Locations) 
+
+# 5. Join into original dataset
+Geocoded_Wine <- Wine %>%
+    left_join(Addresses, by = "address")
+
+# 4. Save geocoded dataset
+file_name <- "geocoded.csv.gz"
+Geocoded_Wine %>% write_csv(path = file.path(data_dir, file_name))
+```
+
+Now we have a geocoded version of the dataset that we can further refine for our analysis.
+
+## Verify
+
+To prove that our geocoding worked we can import our new dataset.
+
+```{r verify, message=FALSE, echo = TRUE}
+Wine <- read_csv("../data/geocoded.csv.gz") %>%
+    glimpse()
+```
+
+## Building Our Shiny App
+
+Our Shiny app can be found [here](https://szablah.shinyapps.io/wine/). There are 3 components: first, an interactive map that allows users to view wineries of the world and filter based on variety. Users can see average points or average price of the wines around the world. The second component of the Shiny app is a searchable catalog, where users can search among any of the wines included in the catalog and geolocate them on the map. The third and final component of our Shiny app is a prediction engine, which allows users to input their own wine with country, province, description, price, and variety, and our prediction model described in the previous chapter will produce an estimate of the number of points the inputted wine would receive.
+
+<!--chapter:end:03-chap3.Rmd-->
+
+# Conclusion {-}
+
+This project set out to make wine easier to understand for the average person. Through this project, we examined close to 130,000 wine reviews to create a complex web application via Shiny that allows users to explore wines and wineries through an interactive map and searchable catalog as well as to enter new wine observations to receive a prediction of how many point values their new wine would receive. Through the map and catalog explorer and prediction engine, anyone can learn more about wine and explore the different varieties around the world.
+
+This project also involved text analysis beyond the scope of our Stat-495 class, researching into word ranking methods such as term frequency-inverse document frequency and learning how to incorporate document-term matrices into our prediction model. Our gradient boosting model showed that the most important features to predicting wine points are price, variety, and province. The most important word for prediction is "rich."
+
+## Limitations and Future Directions
+
+There were several limitations to the work in this project. They will be discussed below, and various suggestions for future directions to address these limitations will be described.
+
+### Data Scraping
+
+The Kaggle dataset we used originated from Wine Magazine's website and was scraped in 2017. However, in the most recent years, almost 100,000 more wines have been added to the website. A future direction this project could go into would be to use the python scraper provided by the Kaggle user who uploaded the original dataset^[@thoutt2017] and scrape the newer wine reviews so there would be more up-to-date data.
+
+### Model Computation Run Time
+
+A key limitation to the prediction aspect of this project was the sheer amount of computation involved. The model created in this project used only 200 of the words with the highest mean TF-IDF values, but models with many more words could have been created and would likely yield lower MSE values and better predictions. However, given how the gradient boosting algorithm is computationally intensive because it requires creating many small trees, we chose to limit the number of variables used in the dataset to run the model.
+
+Future steps that could be made in order to speed up computation time and create a more accurate model could be to look into faster gradient boosting algorithm methods. In R, there are newer packages such as `XGBoost` and `LightGBM` that were developed specifically for decreasing run time of the computationally intensive gradient boosting algorithms, so the functions in these packages could be explored on the data in this project.
+
+### Confirmation Bias
+
+Although our analyses were run on the assumption that there was no bias among tasters who were rating wine points, we do not know how the original data was collected and whether the tasters were blind to various aspects about the wine they were tasting (for example, price or variety). It is possible that the reason the positive correlation between points and price was acually due to confirmation bias among tasters that more expensive wine should taste better. An interesting further direction this project could go in would be to explore whether different tasters had different patterns of rating wines to possibly discern if these tasters were biased.
+
+
+<!--chapter:end:04-conclusion.Rmd-->
+
+<!--
+The bib chunk below must go last in this document according to how R Markdown renders.  More info is at http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html
+-->
+
+\backmatter
+
+<!-- 
+If you'd like to change the name of the bibliography to something else,
+delete "References" and replace it.
+-->
+
+# References {-}
+<!--
+This manually sets the header for this unnumbered chapter.
+-->
+\markboth{References}{References}
+<!--
+To remove the indentation of the first entry.
+-->
+\noindent
+
+<!--
+To create a hanging indent and spacing between entries.  These three lines may need to be removed for styles that don't require the hanging indent.
+-->
+
+\setlength{\parindent}{-0.20in}
+\setlength{\leftskip}{0.20in}
+\setlength{\parskip}{8pt}
+
+
+<!--
+This is just for testing with more citations for the bibliography at the end.  Add other entries into the list here if you'd like them to appear in the bibliography even if they weren't explicitly cited in the document.
+-->
+
+---
+nocite: | 
+  @manning2008, @textprocess
+...
+
+<!--chapter:end:99-references.Rmd-->
+

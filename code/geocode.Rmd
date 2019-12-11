@@ -1,0 +1,128 @@
+---
+title: "Geocoding Wineries"
+author: "YZ Analytics"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+## Why Geocode? 
+
+Geocoding locations is generally a good idea because it allows for spatial analysis and spatial visualizations. In our case, geocoding the wine reviews will allow us to create interactive maps that visualize the wineries and allows users to explore our dataset. 
+
+## Using `ggmap`
+
+The most convenient approach to perform geocoding in R is to use the `ggmap` package. However, the rather recent change in Google's API requires setting up a project and generating a key in the Google Cloud Project. While we are billed for every observation that we geocode, we have credits available each month. To find out more about the API usage and billing refer to [the official website.](https://developers.google.com/maps/documentation/geocoding/usage-and-billing) To learn more about the `ggmap` package check out the [project's Github repository.](https://github.com/dkahle/ggmap) 
+
+### Reading in the Data
+
+```{r}
+library(ggmap)
+library(dplyr)
+library(readr)
+library(purrr)
+```
+
+```{r}
+data_dir <- "../data"
+file_name <- "winemag-data-130k-v2.csv"
+
+path <- file.path(data_dir, file_name)
+```
+
+```{r, message=FALSE, warning=FALSE}
+Wine <- read_csv(path) %>% 
+    rename(id = X1) %>% 
+    mutate(id = id + 1) 
+```
+
+The `mutate_geocoded` function from `ggmap` would be great if it actually had some error handling. However, it is not robust enough for our needs. Instead, we will create our own function to handle both network and API errors, while ensuring completion of our code.
+
+We will operate in a small sample of observations. This will allow us to test our function and then apply it to the whole dataset.
+
+```{r}
+set.seed(2019)
+
+subset <- Wine %>%
+    count(winery, country) %>%
+    mutate(address = paste0(winery, " ", country)) %>%
+    sample_n(20) 
+```
+
+### Setting Up Helper Function
+
+We mentioned that the function we use to geocode our observations has to be robust. We take advantage of the `purrr` adverbs to handle internal messages that slow down the operation of the geocoding function in `ggmap`. Additionally, we prevent network failures from being an issue by allowing failed requests to retry at most once after a short delay. Finally, in order to be able to ensure the completion of our code without errors, we wrap the geocoding functionality with an alternative for when the function fails. 
+
+You can see all these components working together in the function below.
+
+```{r}
+geocode_robustly <-
+    possibly(
+        insistently(
+            quietly(geocode),
+            rate = rate_delay(0.1, max_times = 2)),
+        otherwise = list(result = tibble(lon = NA_real_, lat = NA_real_))
+    )
+
+```
+
+It is important to make sure that the `otherwise` argument matches the type of output given by the function that is wrapped by the `possibly` adverb.
+
+Finally, we apply our function to the addresses of the observations. 
+
+```{r}
+locations <- subset %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+subset %>% bind_cols(locations)
+```
+
+Note that there will be some `NA` values in our location variables because we are largely relying on the integrity of the dataset and the Google Maps search engine.
+
+Confirming that our function is operating as desired, we can now we geocode all the units in our dataset. 
+
+### Putting it all Together
+
+In the code below we perform a further optimization by only geocoding the set of wineries. This allows us to avoid performing slow network requests on observations that have already been geocoded. The following represents every step taken to geocode our dataset with more than 100K observations. (The code will take some time to run.)
+
+```{r, eval=FALSE}
+# 1. Add address column to geocode
+Wine <- Wine %>%
+    mutate(address = paste0(winery, " ", country))
+
+# 2. Get unique addresses
+Addresses <- Wine %>%
+    count(address) %>%
+    select(-n)
+
+# 3. Geocode unique addresses
+Locations <- Addresses %>%
+    pull(address) %>%
+    map_dfr(~ geocode_robustly(.x)$result)
+
+# 4. Bind location info to addresses
+Addresses <- Addresses %>%
+    bind_cols(Locations) 
+
+# 5. Join into original dataset
+Geocoded_Wine <- Wine %>%
+    left_join(Addresses, by = "address")
+
+# 4. Save geocoded dataset
+file_name <- "geocoded.csv.gz"
+Geocoded_Wine %>% write_csv(path = file.path(data_dir, file_name))
+```
+
+Now we have a geocoded version of the dataset that we can further refine for our analysis.
+
+## Verify
+
+To prove that our geocoding worked we can import our new dataset.
+
+```{r, message=FALSE}
+Wine <- read_csv("../data/geocoded.csv.gz") %>%
+    glimpse()
+```

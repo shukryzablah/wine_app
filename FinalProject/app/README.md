@@ -1,3 +1,0 @@
-# Wine Explorer
-
-TODO: Description 
